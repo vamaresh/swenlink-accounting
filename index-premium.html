@@ -6,7 +6,12 @@
     <title>Limited Companies - Accounting System (Premium)</title>
     
     <!-- Clerk Authentication -->
-    <script async crossorigin="anonymous" src="https://open-rhino-31.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+    <script 
+        async 
+        crossorigin="anonymous" 
+        data-clerk-publishable-key="pk_test_b3Blbi1yaGluby0zMS5jbGVyay5hY2NvdW50cy5kZXYk"
+        src="https://open-rhino-31.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+    </script>
     
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -135,7 +140,7 @@
 
             async function initializeClerk() {
                 try {
-                    // Wait for Clerk to load
+                    // Wait for Clerk to load (it auto-initializes with data-clerk-publishable-key)
                     const waitForClerk = () => {
                         return new Promise((resolve) => {
                             if (window.Clerk) {
@@ -152,11 +157,6 @@
                     };
 
                     const clerkInstance = await waitForClerk();
-                    
-                    await clerkInstance.load({
-                        publishableKey: CLERK_PUBLISHABLE_KEY
-                    });
-                    
                     setClerk(clerkInstance);
 
                     if (clerkInstance.user) {
