@@ -184,25 +184,40 @@
             async function handleUserSignedIn(clerkUser) {
                 setUser(clerkUser);
                 
-                // Get Clerk session token for Supabase RLS
-                const token = await clerkUser.getToken();
-                
-                // Reinitialize Supabase with Clerk token
-                supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    global: {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
+                try {
+                    // Get Clerk session token for Supabase RLS
+                    const token = await clerkUser.getToken();
+                    console.log('Got Clerk token, user ID:', clerkUser.id);
+                    
+                    if (!token) {
+                        console.error('No token received from Clerk');
+                        setIsLoading(false);
+                        return;
                     }
-                });
+                    
+                    // Reinitialize Supabase with Clerk token
+                    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                        global: {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        },
+                        auth: {
+                            persistSession: false
+                        }
+                    });
 
-                // Check/create subscription record
-                await ensureSubscription(clerkUser);
-                
-                // Load company and data
-                await loadCompanyAndData();
-                
-                setIsLoading(false);
+                    // Check/create subscription record
+                    await ensureSubscription(clerkUser);
+                    
+                    // Load company and data
+                    await loadCompanyAndData();
+                } catch (error) {
+                    console.error('Error in handleUserSignedIn:', error);
+                    alert(`Authentication error: ${error.message}`);
+                } finally {
+                    setIsLoading(false);
+                }
             }
 
             async function ensureSubscription(clerkUser) {
@@ -322,7 +337,10 @@
             async function handleCompanySetup(e) {
                 e.preventDefault();
                 try {
-                    const { error } = await supabaseClient
+                    console.log('Creating company with user ID:', user.id);
+                    console.log('Company form data:', companyForm);
+                    
+                    const { data, error } = await supabaseClient
                         .from('companies')
                         .insert({
                             clerk_user_id: user.id,
@@ -331,13 +349,17 @@
                             tax_number: companyForm.taxNumber,
                             address: companyForm.address,
                             financial_year_start: companyForm.financialYearStart
-                        });
+                        })
+                        .select();
 
                     if (error) {
                         console.error('Error creating company:', error);
-                        alert('Failed to create company. Please try again.');
+                        console.error('Error details:', JSON.stringify(error, null, 2));
+                        alert(`Failed to create company: ${error.message || 'Unknown error'}`);
                         return;
                     }
+                    
+                    console.log('Company created successfully:', data);
 
                     // Initialize default chart of accounts
                     const defaultAccounts = [
