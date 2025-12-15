@@ -157,6 +157,10 @@
                     };
 
                     const clerkInstance = await waitForClerk();
+                    console.log('Clerk loaded:', clerkInstance);
+                    console.log('Clerk user:', clerkInstance.user);
+                    console.log('Clerk loaded status:', clerkInstance.loaded);
+                    
                     setClerk(clerkInstance);
 
                     if (clerkInstance.user) {
@@ -167,6 +171,7 @@
 
                     // Listen for auth changes
                     clerkInstance.addListener((event) => {
+                        console.log('Clerk event:', event);
                         if (event.user) {
                             handleUserSignedIn(event.user);
                         } else {
@@ -940,8 +945,13 @@
                                 </div>
                                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Limited Companies</h1>
                                 <p className="text-gray-600">Accounting System (Premium)</p>
+                                <p className="text-sm text-gray-500 mt-4">Sign in to access your accounting data</p>
                             </div>
-                            <div id="clerk-signin" className="clerk-signin-container"></div>
+                            {clerk ? (
+                                <div id="clerk-signin" className="clerk-signin-container"></div>
+                            ) : (
+                                <div className="text-center text-gray-600">Loading authentication...</div>
+                            )}
                         </div>
                     </div>
                 );
