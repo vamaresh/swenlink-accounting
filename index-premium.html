@@ -157,9 +157,31 @@
                     };
 
                     const clerkInstance = await waitForClerk();
-                    console.log('Clerk loaded:', clerkInstance);
+                    console.log('Clerk instance available:', clerkInstance);
+                    
+                    // Wait for Clerk components to be fully loaded
+                    if (!clerkInstance.loaded) {
+                        console.log('Waiting for Clerk components to load...');
+                        await new Promise((resolve) => {
+                            const checkLoaded = setInterval(() => {
+                                if (clerkInstance.loaded) {
+                                    console.log('Clerk components are now fully loaded!');
+                                    clearInterval(checkLoaded);
+                                    resolve();
+                                }
+                            }, 100);
+                            
+                            // Timeout after 10 seconds
+                            setTimeout(() => {
+                                clearInterval(checkLoaded);
+                                console.log('Clerk load timeout - proceeding anyway. Loaded status:', clerkInstance.loaded);
+                                resolve();
+                            }, 10000);
+                        });
+                    }
+                    
+                    console.log('Clerk final loaded status:', clerkInstance.loaded);
                     console.log('Clerk user:', clerkInstance.user);
-                    console.log('Clerk loaded status:', clerkInstance.loaded);
                     
                     setClerk(clerkInstance);
 
