@@ -10,6 +10,7 @@
         async 
         crossorigin="anonymous" 
         data-clerk-publishable-key="pk_test_b3Blbi1yaGluby0zMS5jbGVyay5hY2NvdW50cy5kZXYk"
+        onload="window.Clerk.load()"
         src="https://open-rhino-31.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
     </script>
     
@@ -22,20 +23,41 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        input, textarea, select, button { font-size: 16px; } /* Prevents zoom on iOS */
+        
         .modal-backdrop { backdrop-filter: blur(4px); }
         .sidebar { transition: transform 0.3s ease; }
         @media print { .no-print { display: none; } }
         .sidebar-item { transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(59, 130, 246, 0.2); }
         .sidebar-item.active { background-color: rgba(59, 130, 246, 0.3); border-left: 4px solid #3b82f6; }
+        
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .sidebar { position: fixed; height: 100vh; z-index: 50; }
+            .sidebar { position: fixed; height: 100vh; z-index: 50; width: 280px !important; }
             .sidebar.closed { transform: translateX(-100%); }
+            .main-content { padding: 1rem !important; }
+            .grid { grid-template-columns: 1fr !important; }
+            table { font-size: 14px; }
+            .modal-content { max-height: 90vh; overflow-y: auto; }
         }
+        
+        @media (max-width: 480px) {
+            .text-3xl { font-size: 1.5rem !important; }
+            .text-2xl { font-size: 1.25rem !important; }
+            .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+            .py-8 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+        }
+        
         .image-preview { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; margin-top: 8px; }
         .image-thumbnail { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; }
-        * { -webkit-tap-highlight-color: transparent; }
-        input, textarea, select, button { font-size: 16px; } /* Prevents zoom on iOS */
+        
+        /* Touch-friendly buttons */
+        @media (max-width: 768px) {
+            button, a { min-height: 44px; }
+        }
     </style>
 </head>
 <body>
@@ -135,77 +157,29 @@
             });
 
             useEffect(() => {
-                initializeClerk();
-            }, []);
-
-            async function initializeClerk() {
-                try {
-                    // Wait for Clerk to load (it auto-initializes with data-clerk-publishable-key)
-                    const waitForClerk = () => {
-                        return new Promise((resolve) => {
-                            if (window.Clerk) {
-                                resolve(window.Clerk);
-                            } else {
-                                const checkClerk = setInterval(() => {
-                                    if (window.Clerk) {
-                                        clearInterval(checkClerk);
-                                        resolve(window.Clerk);
-                                    }
-                                }, 100);
-                            }
-                        });
-                    };
-
-                    const clerkInstance = await waitForClerk();
-                    console.log('Clerk instance available:', clerkInstance);
-                    
-                    // Wait for Clerk components to be fully loaded
-                    if (!clerkInstance.loaded) {
-                        console.log('Waiting for Clerk components to load...');
-                        await new Promise((resolve) => {
-                            const checkLoaded = setInterval(() => {
-                                if (clerkInstance.loaded) {
-                                    console.log('Clerk components are now fully loaded!');
-                                    clearInterval(checkLoaded);
-                                    resolve();
-                                }
-                            }, 100);
+                const initClerk = async () => {
+                    if (window.Clerk) {
+                        try {
+                            await window.Clerk.load();
+                            setClerk(window.Clerk);
                             
-                            // Timeout after 10 seconds
-                            setTimeout(() => {
-                                clearInterval(checkLoaded);
-                                console.log('Clerk load timeout - proceeding anyway. Loaded status:', clerkInstance.loaded);
-                                resolve();
-                            }, 10000);
-                        });
-                    }
-                    
-                    console.log('Clerk final loaded status:', clerkInstance.loaded);
-                    console.log('Clerk user:', clerkInstance.user);
-                    
-                    setClerk(clerkInstance);
-
-                    if (clerkInstance.user) {
-                        await handleUserSignedIn(clerkInstance.user);
-                    } else {
-                        setIsLoading(false);
-                    }
-
-                    // Listen for auth changes
-                    clerkInstance.addListener((event) => {
-                        console.log('Clerk event:', event);
-                        if (event.user) {
-                            handleUserSignedIn(event.user);
-                        } else {
-                            setUser(null);
-                            setSubscription(null);
+                            if (window.Clerk.user) {
+                                await handleUserSignedIn(window.Clerk.user);
+                            } else {
+                                setIsLoading(false);
+                            }
+                        } catch (error) {
+                            console.error('Clerk error:', error);
+                            setIsLoading(false);
                         }
-                    });
-                } catch (error) {
-                    console.error('Failed to initialize Clerk:', error);
-                    setIsLoading(false);
-                }
-            }
+                    } else {
+                        const timer = setTimeout(() => initClerk(), 100);
+                        return () => clearTimeout(timer);
+                    }
+                };
+
+                initClerk();
+            }, []);
 
             async function handleUserSignedIn(clerkUser) {
                 setUser(clerkUser);
@@ -897,16 +871,16 @@
                 }
             };
 
-            // Handle sign-in redirect
-            const handleSignIn = () => {
+            // Handle sign-in - open Clerk's hosted pages
+            const handleSignIn = async () => {
                 if (clerk) {
-                    clerk.redirectToSignIn();
+                    await clerk.openSignIn();
                 }
             };
 
-            const handleSignUp = () => {
+            const handleSignUp = async () => {
                 if (clerk) {
-                    clerk.redirectToSignUp();
+                    await clerk.openSignUp();
                 }
             };
 
