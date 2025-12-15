@@ -135,13 +135,24 @@
 
             async function initializeClerk() {
                 try {
-                    const clerkInstance = window.Clerk;
-                    if (!clerkInstance) {
-                        console.error('Clerk not loaded');
-                        setIsLoading(false);
-                        return;
-                    }
+                    // Wait for Clerk to load
+                    const waitForClerk = () => {
+                        return new Promise((resolve) => {
+                            if (window.Clerk) {
+                                resolve(window.Clerk);
+                            } else {
+                                const checkClerk = setInterval(() => {
+                                    if (window.Clerk) {
+                                        clearInterval(checkClerk);
+                                        resolve(window.Clerk);
+                                    }
+                                }, 100);
+                            }
+                        });
+                    };
 
+                    const clerkInstance = await waitForClerk();
+                    
                     await clerkInstance.load({
                         publishableKey: CLERK_PUBLISHABLE_KEY
                     });
@@ -875,21 +886,15 @@
                 );
             }
 
-            // Clerk Sign In Component
-            const ClerkSignIn = () => {
-                useEffect(() => {
-                    if (clerk && !user) {
-                        clerk.mountSignIn(document.getElementById('clerk-signin'));
+            // Mount Clerk Sign In
+            useEffect(() => {
+                if (clerk && !user) {
+                    const signInDiv = document.getElementById('clerk-signin');
+                    if (signInDiv) {
+                        clerk.mountSignIn(signInDiv);
                     }
-                    return () => {
-                        if (clerk) {
-                            clerk.unmountSignIn(document.getElementById('clerk-signin'));
-                        }
-                    };
-                }, [clerk, user]);
-
-                return <div id="clerk-signin" className="space-y-4"></div>;
-            };
+                }
+            }, [clerk, user]);
 
             if (!user) {
                 return (
@@ -904,7 +909,7 @@
                                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Limited Companies</h1>
                                 <p className="text-gray-600">Accounting System (Premium)</p>
                             </div>
-                            <ClerkSignIn />
+                            <div id="clerk-signin" className="clerk-signin-container"></div>
                         </div>
                     </div>
                 );
