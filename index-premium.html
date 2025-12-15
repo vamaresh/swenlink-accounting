@@ -897,47 +897,18 @@
                 }
             };
 
-            // Mount Clerk Sign In UI (wait for components to be ready)
-            useEffect(() => {
-                let mounted = true;
-                
-                const mountClerkSignIn = async () => {
-                    if (clerk && !user && !isLoading) {
-                        // Wait for Clerk components to be ready
-                        while (mounted && !clerk.loaded) {
-                            await new Promise(resolve => setTimeout(resolve, 100));
-                        }
-                        
-                        if (!mounted) return;
-                        
-                        const signInDiv = document.getElementById('clerk-signin');
-                        if (signInDiv) {
-                            try {
-                                clerk.mountSignIn(signInDiv);
-                            } catch (error) {
-                                console.error('Error mounting Clerk sign-in:', error);
-                            }
-                        }
-                    }
-                };
-                
-                mountClerkSignIn();
-                
-                return () => {
-                    mounted = false;
-                    if (clerk && !user && clerk.loaded) {
-                        const signInDiv = document.getElementById('clerk-signin');
-                        if (signInDiv) {
-                            try {
-                                clerk.unmountSignIn(signInDiv);
-                            } catch (error) {
-                                // Ignore unmount errors
-                                console.debug('Clerk unmount skipped:', error.message);
-                            }
-                        }
-                    }
-                };
-            }, [clerk, user, isLoading]);
+            // Handle sign-in redirect
+            const handleSignIn = () => {
+                if (clerk) {
+                    clerk.redirectToSignIn();
+                }
+            };
+
+            const handleSignUp = () => {
+                if (clerk) {
+                    clerk.redirectToSignUp();
+                }
+            };
 
             const metrics = {
                 totalReceivables: data.invoices.filter(i => i.status !== 'paid').reduce((s, i) => s + i.total, 0),
@@ -970,7 +941,24 @@
                                 <p className="text-sm text-gray-500 mt-4">Sign in to access your accounting data</p>
                             </div>
                             {clerk ? (
-                                <div id="clerk-signin" className="clerk-signin-container"></div>
+                                <div className="space-y-4">
+                                    <button
+                                        onClick={handleSignIn}
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
+                                    >
+                                        Sign In
+                                    </button>
+                                    <button
+                                        onClick={handleSignUp}
+                                        className="w-full bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-4 rounded-lg border-2 border-blue-600 transition duration-200"
+                                    >
+                                        Create Account
+                                    </button>
+                                    <p className="text-xs text-center text-gray-500 mt-4">
+                                        Free tier: localStorage only<br/>
+                                        Premium (£5/month): Cloud storage with multi-device sync
+                                    </p>
+                                </div>
                             ) : (
                                 <div className="text-center text-gray-600">Loading authentication...</div>
                             )}
