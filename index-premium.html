@@ -870,6 +870,24 @@
                 }
             };
 
+            // Mount Clerk Sign In UI
+            useEffect(() => {
+                if (clerk && !user && !isLoading) {
+                    const signInDiv = document.getElementById('clerk-signin');
+                    if (signInDiv) {
+                        clerk.mountSignIn(signInDiv);
+                    }
+                }
+                return () => {
+                    if (clerk) {
+                        const signInDiv = document.getElementById('clerk-signin');
+                        if (signInDiv) {
+                            clerk.unmountSignIn(signInDiv);
+                        }
+                    }
+                };
+            }, [clerk, user, isLoading]);
+
             const metrics = {
                 totalReceivables: data.invoices.filter(i => i.status !== 'paid').reduce((s, i) => s + i.total, 0),
                 totalPayables: data.bills.filter(b => b.status !== 'paid').reduce((s, b) => s + b.total, 0),
@@ -885,16 +903,6 @@
                     </div>
                 );
             }
-
-            // Mount Clerk Sign In
-            useEffect(() => {
-                if (clerk && !user) {
-                    const signInDiv = document.getElementById('clerk-signin');
-                    if (signInDiv) {
-                        clerk.mountSignIn(signInDiv);
-                    }
-                }
-            }, [clerk, user]);
 
             if (!user) {
                 return (
