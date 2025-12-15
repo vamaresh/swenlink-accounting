@@ -415,227 +415,189 @@
                 setEditingId(null);
             };
 
-            const handleSubmit = async (e) => {
+            const handleSubmit = (e) => {
                 e.preventDefault();
+                const newData = {...data};
                 
-                try {
-                    switch(modalType) {
-                        case 'customer':
-                            if (editingId) {
-                                await supabaseClient.from('customers').update({
-                                    name: formData.name, email: formData.email,
-                                    phone: formData.phone, address: formData.address
-                                }).eq('id', editingId);
-                            } else {
-                                await supabaseClient.from('customers').insert({
-                                    clerk_user_id: user.id, name: formData.name,
-                                    email: formData.email, phone: formData.phone,
-                                    address: formData.address
-                                });
-                            }
-                            break;
-                        case 'supplier':
-                            if (editingId) {
-                                await supabaseClient.from('suppliers').update({
-                                    name: formData.name, email: formData.email,
-                                    phone: formData.phone, address: formData.address
-                                }).eq('id', editingId);
-                            } else {
-                                await supabaseClient.from('suppliers').insert({
-                                    clerk_user_id: user.id, name: formData.name,
-                                    email: formData.email, phone: formData.phone,
-                                    address: formData.address
-                                });
-                            }
-                            break;
-                        case 'invoice':
-                            const iSub = parseFloat(formData.subtotal || 0);
-                            const iRate = parseFloat(formData.vatRate || 0.20);
-                            const iVAT = parseFloat(formData.vat || (iSub * iRate));
-                            if (editingId) {
-                                await supabaseClient.from('invoices').update({
-                                    customer_id: formData.customerId, invoice_number: formData.invoiceNumber,
-                                    date: formData.date, due_date: formData.dueDate,
-                                    description: formData.description, subtotal: iSub,
-                                    vat_rate: iRate, vat: iVAT, total: iSub + iVAT,
-                                    status: formData.status || 'unpaid'
-                                }).eq('id', editingId);
-                            } else {
-                                await supabaseClient.from('invoices').insert({
-                                    clerk_user_id: user.id, customer_id: formData.customerId,
-                                    invoice_number: formData.invoiceNumber,
-                                    date: formData.date || new Date().toISOString().split('T')[0],
-                                    due_date: formData.dueDate, description: formData.description,
-                                    subtotal: iSub, vat_rate: iRate, vat: iVAT,
-                                    total: iSub + iVAT, status: formData.status || 'unpaid'
-                                });
-                            }
-                            break;
-                        case 'bill':
-                            const bSub = parseFloat(formData.subtotal || 0);
-                            const bRate = parseFloat(formData.vatRate || 0.20);
-                            const bVAT = parseFloat(formData.vat || (bSub * bRate));
-                            if (editingId) {
-                                await supabaseClient.from('bills').update({
-                                    supplier_id: formData.supplierId, bill_number: formData.billNumber,
-                                    date: formData.date, due_date: formData.dueDate,
-                                    description: formData.description, subtotal: bSub,
-                                    vat_rate: bRate, vat: bVAT, total: bSub + bVAT,
-                                    status: formData.status || 'unpaid'
-                                }).eq('id', editingId);
-                                if (formData.images?.length > 0) {
-                                    await supabaseClient.from('bill_images').delete().eq('bill_id', editingId);
-                                    await supabaseClient.from('bill_images').insert(
-                                        formData.images.map(url => ({ bill_id: editingId, image_url: url }))
-                                    );
-                                }
-                            } else {
-                                const { data: newBill } = await supabaseClient.from('bills').insert({
-                                    clerk_user_id: user.id, supplier_id: formData.supplierId,
-                                    bill_number: formData.billNumber,
-                                    date: formData.date || new Date().toISOString().split('T')[0],
-                                    due_date: formData.dueDate, description: formData.description,
-                                    subtotal: bSub, vat_rate: bRate, vat: bVAT,
-                                    total: bSub + bVAT, status: formData.status || 'unpaid'
-                                }).select().single();
-                                if (formData.images?.length > 0 && newBill) {
-                                    await supabaseClient.from('bill_images').insert(
-                                        formData.images.map(url => ({ bill_id: newBill.id, image_url: url }))
-                                    );
-                                }
-                            }
-                            break;
-                        case 'expense':
-                            if (editingId) {
-                                await supabaseClient.from('expenses').update({
-                                    date: formData.date, category: formData.category,
-                                    description: formData.description, amount: parseFloat(formData.amount || 0),
-                                    payment_method: formData.paymentMethod
-                                }).eq('id', editingId);
-                                if (formData.images?.length > 0) {
-                                    await supabaseClient.from('expense_images').delete().eq('expense_id', editingId);
-                                    await supabaseClient.from('expense_images').insert(
-                                        formData.images.map(url => ({ expense_id: editingId, image_url: url }))
-                                    );
-                                }
-                            } else {
-                                const { data: newExp } = await supabaseClient.from('expenses').insert({
-                                    clerk_user_id: user.id,
-                                    date: formData.date || new Date().toISOString().split('T')[0],
-                                    category: formData.category, description: formData.description,
-                                    amount: parseFloat(formData.amount || 0),
-                                    payment_method: formData.paymentMethod
-                                }).select().single();
-                                if (formData.images?.length > 0 && newExp) {
-                                    await supabaseClient.from('expense_images').insert(
-                                        formData.images.map(url => ({ expense_id: newExp.id, image_url: url }))
-                                    );
-                                }
-                            }
-                            break;
-                        case 'account':
-                            if (editingId) {
-                                await supabaseClient.from('chart_of_accounts').update({
-                                    code: formData.code, name: formData.name,
-                                    type: formData.type, balance: parseFloat(formData.balance || 0)
-                                }).eq('id', editingId);
-                            } else {
-                                await supabaseClient.from('chart_of_accounts').insert({
-                                    clerk_user_id: user.id, code: formData.code,
-                                    name: formData.name, type: formData.type,
-                                    balance: parseFloat(formData.balance || 0)
-                                });
-                            }
-                            break;
-                        case 'bankAccount':
-                            if (editingId) {
-                                await supabaseClient.from('bank_accounts').update({
-                                    name: formData.name, bank: formData.bank,
-                                    account_number: formData.accountNumber, sort_code: formData.sortCode,
-                                    balance: parseFloat(formData.balance || 0),
-                                    currency: formData.currency || 'GBP'
-                                }).eq('id', editingId);
-                            } else {
-                                await supabaseClient.from('bank_accounts').insert({
-                                    clerk_user_id: user.id, name: formData.name, bank: formData.bank,
-                                    account_number: formData.accountNumber, sort_code: formData.sortCode,
-                                    balance: parseFloat(formData.balance || 0),
-                                    currency: formData.currency || 'GBP'
-                                });
-                            }
-                            break;
-                    }
-                    
-                    await loadCompanyAndData();
-                    closeModal();
-                } catch (error) {
-                    console.error('Error saving:', error);
-                    alert('Failed to save. Please try again.');
+                switch(modalType) {
+                    case 'customer':
+                        if (editingId) {
+                            newData.customers = newData.customers.map(c => c.id === editingId ? {...formData, id: editingId} : c);
+                        } else {
+                            newData.customers.push({...formData, id: Date.now()});
+                        }
+                        break;
+                    case 'supplier':
+                        if (editingId) {
+                            newData.suppliers = newData.suppliers.map(s => s.id === editingId ? {...formData, id: editingId} : s);
+                        } else {
+                            newData.suppliers.push({...formData, id: Date.now()});
+                        }
+                        break;
+                    case 'invoice':
+                        const invoiceSubtotal = parseFloat(formData.subtotal || 0);
+                        const invoiceVATRate = parseFloat(formData.vatRate || 0.20);
+                        const invoiceVAT = parseFloat(formData.vat || (invoiceSubtotal * invoiceVATRate));
+                        const invoiceData = {
+                            ...formData,
+                            id: editingId || Date.now(),
+                            subtotal: invoiceSubtotal,
+                            vatRate: invoiceVATRate,
+                            vat: invoiceVAT,
+                            total: invoiceSubtotal + invoiceVAT,
+                            status: formData.status || 'unpaid',
+                            date: formData.date || new Date().toISOString().split('T')[0]
+                        };
+                        if (editingId) {
+                            newData.invoices = newData.invoices.map(i => i.id === editingId ? invoiceData : i);
+                        } else {
+                            newData.invoices.push(invoiceData);
+                        }
+                        break;
+                    case 'bill':
+                        const billSubtotal = parseFloat(formData.subtotal || 0);
+                        const billVATRate = parseFloat(formData.vatRate || 0.20);
+                        const billVAT = parseFloat(formData.vat || (billSubtotal * billVATRate));
+                        const billData = {
+                            ...formData,
+                            id: editingId || Date.now(),
+                            subtotal: billSubtotal,
+                            vatRate: billVATRate,
+                            vat: billVAT,
+                            total: billSubtotal + billVAT,
+                            status: formData.status || 'unpaid',
+                            date: formData.date || new Date().toISOString().split('T')[0]
+                        };
+                        if (editingId) {
+                            newData.bills = newData.bills.map(b => b.id === editingId ? billData : b);
+                        } else {
+                            newData.bills.push(billData);
+                        }
+                        break;
+                    case 'expense':
+                        const expenseData = {
+                            ...formData,
+                            id: editingId || Date.now(),
+                            amount: parseFloat(formData.amount || 0),
+                            date: formData.date || new Date().toISOString().split('T')[0]
+                        };
+                        if (editingId) {
+                            newData.expenses = newData.expenses.map(e => e.id === editingId ? expenseData : e);
+                        } else {
+                            newData.expenses.push(expenseData);
+                        }
+                        break;
+                    case 'account':
+                        if (editingId) {
+                            newData.chartOfAccounts = newData.chartOfAccounts.map(a => 
+                                a.id === editingId ? {...formData, id: editingId, balance: parseFloat(formData.balance || 0)} : a
+                            );
+                        } else {
+                            newData.chartOfAccounts.push({
+                                ...formData, 
+                                id: Date.now(), 
+                                balance: parseFloat(formData.balance || 0)
+                            });
+                        }
+                        break;
+                    case 'bankAccount':
+                        if (editingId) {
+                            newData.bankAccounts = newData.bankAccounts.map(b => 
+                                b.id === editingId ? {...formData, id: editingId, balance: parseFloat(formData.balance || 0)} : b
+                            );
+                        } else {
+                            newData.bankAccounts.push({
+                                ...formData,
+                                id: Date.now(),
+                                balance: parseFloat(formData.balance || 0),
+                                currency: formData.currency || 'GBP'
+                            });
+                        }
+                        break;
                 }
+                
+                saveData(newData);
+                closeModal();
             };
 
-            const handleDelete = async (type, id) => {
+            const handleDelete = (type, id) => {
                 if (!confirm('Are you sure you want to delete this item?')) return;
+                const newData = {...data};
                 
-                try {
-                    const tableMap = {
-                        'customer': 'customers', 'supplier': 'suppliers',
-                        'invoice': 'invoices', 'bill': 'bills', 'expense': 'expenses',
-                        'account': 'chart_of_accounts', 'vat': 'vat_returns',
-                        'bankAccount': 'bank_accounts'
-                    };
-                    
-                    await supabaseClient.from(tableMap[type]).delete().eq('id', id);
-                    await loadCompanyAndData();
-                } catch (error) {
-                    console.error('Error deleting:', error);
-                    alert('Failed to delete. Please try again.');
+                switch(type) {
+                    case 'customer':
+                        newData.customers = newData.customers.filter(c => c.id !== id);
+                        break;
+                    case 'supplier':
+                        newData.suppliers = newData.suppliers.filter(s => s.id !== id);
+                        break;
+                    case 'invoice':
+                        newData.invoices = newData.invoices.filter(i => i.id !== id);
+                        break;
+                    case 'bill':
+                        newData.bills = newData.bills.filter(b => b.id !== id);
+                        break;
+                    case 'expense':
+                        newData.expenses = newData.expenses.filter(e => e.id !== id);
+                        break;
+                    case 'account':
+                        newData.chartOfAccounts = newData.chartOfAccounts.filter(a => a.id !== id);
+                        break;
+                    case 'vat':
+                        newData.vatReturns = newData.vatReturns.filter(v => v.id !== id);
+                        break;
+                    case 'bankAccount':
+                        newData.bankAccounts = newData.bankAccounts.filter(b => b.id !== id);
+                        break;
                 }
+                
+                saveData(newData);
             };
 
-            const generateVATReturn = async () => {
-                try {
-                    const today = new Date();
-                    const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1);
-                    const quarterEnd = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3 + 3, 0);
-                    const startStr = quarterStart.toISOString().split('T')[0];
-                    const endStr = quarterEnd.toISOString().split('T')[0];
-                    
-                    const relevantInvoices = data.invoices.filter(inv => inv.date >= startStr && inv.date <= endStr);
-                    const relevantBills = data.bills.filter(bill => bill.date >= startStr && bill.date <= endStr);
-                    
-                    const outputVAT = relevantInvoices.reduce((sum, inv) => sum + (parseFloat(inv.vat) || 0), 0);
-                    const inputVAT = relevantBills.reduce((sum, bill) => sum + (parseFloat(bill.vat) || 0), 0);
-                    const vatDue = outputVAT - inputVAT;
-                    
-                    await supabaseClient.from('vat_returns').insert({
-                        clerk_user_id: user.id,
-                        period_start: startStr, period_end: endStr,
-                        output_vat: outputVAT, input_vat: inputVAT, vat_due: vatDue,
-                        status: 'draft', generated_date: new Date().toISOString().split('T')[0]
-                    });
-                    
-                    await loadCompanyAndData();
-                    alert(`VAT Return Generated!\nOutput VAT: £${outputVAT.toFixed(2)}\nInput VAT: £${inputVAT.toFixed(2)}\nVAT Due: £${vatDue.toFixed(2)}\n\nStatus: Draft - Review and file when ready`);
-                } catch (error) {
-                    console.error('Error generating VAT return:', error);
-                    alert('Failed to generate VAT return.');
-                }
+            const generateVATReturn = () => {
+                const today = new Date();
+                const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1);
+                const quarterEnd = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3 + 3, 0);
+                
+                const relevantInvoices = data.invoices.filter(inv => {
+                    const invDate = new Date(inv.date);
+                    return invDate >= quarterStart && invDate <= quarterEnd;
+                });
+                
+                const relevantBills = data.bills.filter(bill => {
+                    const billDate = new Date(bill.date);
+                    return billDate >= quarterStart && billDate <= quarterEnd;
+                });
+                
+                const outputVAT = relevantInvoices.reduce((sum, inv) => sum + (inv.vat || 0), 0);
+                const inputVAT = relevantBills.reduce((sum, bill) => sum + (bill.vat || 0), 0);
+                const vatDue = outputVAT - inputVAT;
+                
+                const vatReturn = {
+                    id: Date.now(),
+                    periodStart: quarterStart.toISOString().split('T')[0],
+                    periodEnd: quarterEnd.toISOString().split('T')[0],
+                    outputVAT: outputVAT,
+                    inputVAT: inputVAT,
+                    vatDue: vatDue,
+                    generatedDate: new Date().toISOString().split('T')[0],
+                    status: 'draft'
+                };
+                
+                const newData = {...data};
+                newData.vatReturns.push(vatReturn);
+                saveData(newData);
+                alert(`VAT Return Generated!\nOutput VAT: £${outputVAT.toFixed(2)}\nInput VAT: £${inputVAT.toFixed(2)}\nVAT Due: £${vatDue.toFixed(2)}\n\nStatus: Draft - Review and file when ready`);
             };
 
-            const fileVATReturn = async (id) => {
+            const fileVATReturn = (id) => {
                 if (!confirm('Are you sure you want to file this VAT return? This action marks it as filed.')) return;
-                try {
-                    await supabaseClient.from('vat_returns').update({
-                        status: 'filed',
-                        filed_date: new Date().toISOString().split('T')[0]
-                    }).eq('id', id);
-                    await loadCompanyAndData();
-                    alert('VAT Return filed successfully!');
-                } catch (error) {
-                    console.error('Error filing VAT return:', error);
-                    alert('Failed to file VAT return.');
-                }
+                const newData = {...data};
+                newData.vatReturns = newData.vatReturns.map(v => 
+                    v.id === id ? {...v, status: 'filed', filedDate: new Date().toISOString().split('T')[0]} : v
+                );
+                saveData(newData);
+                alert('VAT Return filed successfully!');
             };
 
             const exportInvoicePDF = (invoice) => {
@@ -867,31 +829,118 @@
                 cashBalance: data.bankAccounts.reduce((s, b) => s + b.balance, 0)
             };
 
-            if (isLoading) {
-                return (
-                    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
-                        <div className="text-white text-2xl">Loading...</div>
-                    </div>
-                );
-            }
+            if (!isLoggedIn) {
+                if (showSignup) {
+                    return (
+                        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+                                <div className="text-center mb-8">
+                                    <div className="flex justify-center mb-4">
+                                        <div className="bg-blue-100 p-4 rounded-full">
+                                            <Icon name="Building2" className="w-12 h-12 text-blue-600" />
+                                        </div>
+                                    </div>
+                                    <h1 className="text-3xl font-bold text-gray-800 mb-2">Limited Companies</h1>
+                                    <p className="text-gray-600">Accounting System - Create Account</p>
+                                </div>
+                                <form onSubmit={handleSignup} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
+                                            <input
+                                                type="text"
+                                                value={signupForm.companyName}
+                                                onChange={(e) => setSignupForm({...signupForm, companyName: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Company Reg Number *</label>
+                                            <input
+                                                type="text"
+                                                value={signupForm.companyRegNumber}
+                                                onChange={(e) => setSignupForm({...signupForm, companyRegNumber: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Company Tax Number</label>
+                                            <input
+                                                type="text"
+                                                value={signupForm.companyTaxNumber}
+                                                onChange={(e) => setSignupForm({...signupForm, companyTaxNumber: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Company Address</label>
+                                            <textarea
+                                                value={signupForm.companyAddress}
+                                                onChange={(e) => setSignupForm({...signupForm, companyAddress: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                                rows="2"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Financial Year Start *</label>
+                                            <input
+                                                type="date"
+                                                value={signupForm.financialYearStart}
+                                                onChange={(e) => setSignupForm({...signupForm, financialYearStart: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                                            <input
+                                                type="email"
+                                                value={signupForm.email}
+                                                onChange={(e) => setSignupForm({...signupForm, email: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                                            <input
+                                                type="password"
+                                                value={signupForm.password}
+                                                onChange={(e) => setSignupForm({...signupForm, password: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                                required
+                                                minLength="6"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+                                            <input
+                                                type="password"
+                                                value={signupForm.confirmPassword}
+                                                onChange={(e) => setSignupForm({...signupForm, confirmPassword: e.target.value})}
+                                                className="w-full px-4 py-3 border rounded-lg"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    {loginError && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">{loginError}</div>}
+                                    <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                                        <Icon name="Building2" className="w-5 h-5" />
+                                        Create Account
+                                    </button>
+                                    <div className="text-center">
+                                        <button type="button" onClick={() => {setShowSignup(false); setLoginError('');}} className="text-blue-600 hover:underline text-sm">
+                                            Already have an account? Sign in
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    );
+                }
 
-            // Clerk Sign In Component
-            const ClerkSignIn = () => {
-                useEffect(() => {
-                    if (clerk && !user) {
-                        clerk.mountSignIn(document.getElementById('clerk-signin'));
-                    }
-                    return () => {
-                        if (clerk) {
-                            clerk.unmountSignIn(document.getElementById('clerk-signin'));
-                        }
-                    };
-                }, [clerk, user]);
-
-                return <div id="clerk-signin" className="space-y-4"></div>;
-            };
-
-            if (!user) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
                         <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
@@ -902,83 +951,40 @@
                                     </div>
                                 </div>
                                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Limited Companies</h1>
-                                <p className="text-gray-600">Accounting System (Premium)</p>
+                                <p className="text-gray-600">Accounting System</p>
                             </div>
-                            <ClerkSignIn />
-                        </div>
-                    </div>
-                );
-            }
-
-            // Company Setup Screen
-            if (showCompanySetup) {
-                return (
-                    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-2xl">
-                            <div className="text-center mb-8">
-                                <div className="flex justify-center mb-4">
-                                    <div className="bg-blue-100 p-4 rounded-full">
-                                        <Icon name="Building2" className="w-12 h-12 text-blue-600" />
-                                    </div>
-                                </div>
-                                <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome!</h1>
-                                <p className="text-gray-600">Let's set up your company</p>
-                            </div>
-                            <form onSubmit={handleCompanySetup} className="space-y-4">
+                            <form onSubmit={handleLogin} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                                     <input
-                                        type="text"
-                                        value={companyForm.name}
-                                        onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})}
+                                        type="email"
+                                        value={loginForm.email}
+                                        onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
                                         className="w-full px-4 py-3 border rounded-lg"
                                         required
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Reg Number</label>
-                                        <input
-                                            type="text"
-                                            value={companyForm.regNumber}
-                                            onChange={(e) => setCompanyForm({...companyForm, regNumber: e.target.value})}
-                                            className="w-full px-4 py-3 border rounded-lg"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Tax Number</label>
-                                        <input
-                                            type="text"
-                                            value={companyForm.taxNumber}
-                                            onChange={(e) => setCompanyForm({...companyForm, taxNumber: e.target.value})}
-                                            className="w-full px-4 py-3 border rounded-lg"
-                                        />
-                                    </div>
-                                </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                                    <textarea
-                                        value={companyForm.address}
-                                        onChange={(e) => setCompanyForm({...companyForm, address: e.target.value})}
-                                        className="w-full px-4 py-3 border rounded-lg"
-                                        rows="3"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Financial Year Start *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                                     <input
-                                        type="date"
-                                        value={companyForm.financialYearStart}
-                                        onChange={(e) => setCompanyForm({...companyForm, financialYearStart: e.target.value})}
+                                        type="password"
+                                        value={loginForm.password}
+                                        onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                                         className="w-full px-4 py-3 border rounded-lg"
                                         required
                                     />
                                 </div>
+                                {loginError && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">{loginError}</div>}
                                 <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
-                                    <Icon name="CheckCircle" className="w-5 h-5" />
-                                    Complete Setup
+                                    <Icon name="Lock" className="w-5 h-5" />
+                                    Sign In
                                 </button>
                             </form>
+                            <div className="mt-6 text-center">
+                                <button type="button" onClick={() => setShowSignup(true)} className="text-blue-600 hover:underline text-sm font-semibold">
+                                    Don't have an account? Create one
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -1235,7 +1241,7 @@
                         <div className="absolute bottom-0 w-full p-4 border-t border-gray-700">
                             <div className="mb-3 px-2">
                                 <p className="text-xs text-gray-400">Logged in as</p>
-                                <p className="text-sm font-semibold truncate text-white">{user?.primaryEmailAddress?.emailAddress}</p>
+                                <p className="text-sm font-semibold truncate text-white">{currentUser?.email}</p>
                             </div>
                             <button onClick={exportData} className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm mb-2">
                                 <Icon name="Download" className="w-4 h-4" />
