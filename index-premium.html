@@ -875,14 +875,23 @@
                 if (clerk && !user && !isLoading) {
                     const signInDiv = document.getElementById('clerk-signin');
                     if (signInDiv) {
-                        clerk.mountSignIn(signInDiv);
+                        try {
+                            clerk.mountSignIn(signInDiv);
+                        } catch (error) {
+                            console.error('Error mounting Clerk sign-in:', error);
+                        }
                     }
                 }
                 return () => {
-                    if (clerk) {
+                    if (clerk && !user) {
                         const signInDiv = document.getElementById('clerk-signin');
                         if (signInDiv) {
-                            clerk.unmountSignIn(signInDiv);
+                            try {
+                                clerk.unmountSignIn(signInDiv);
+                            } catch (error) {
+                                // Ignore unmount errors - component may not be ready
+                                console.debug('Clerk unmount skipped:', error.message);
+                            }
                         }
                     }
                 };
