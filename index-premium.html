@@ -871,16 +871,20 @@
                 }
             };
 
-            // Handle sign-in - open Clerk's hosted pages
-            const handleSignIn = async () => {
+            // Handle sign-in using Clerk's redirect flow
+            const handleSignIn = () => {
                 if (clerk) {
-                    await clerk.openSignIn();
+                    clerk.redirectToSignIn({
+                        redirectUrl: window.location.href
+                    });
                 }
             };
 
-            const handleSignUp = async () => {
+            const handleSignUp = () => {
                 if (clerk) {
-                    await clerk.openSignUp();
+                    clerk.redirectToSignUp({
+                        redirectUrl: window.location.href
+                    });
                 }
             };
 
