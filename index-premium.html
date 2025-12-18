@@ -185,12 +185,26 @@
                 setUser(clerkUser);
                 
                 try {
-                    // Get Clerk session token for Supabase RLS
-                    const token = await clerkUser.getToken();
-                    console.log('Got Clerk token, user ID:', clerkUser.id);
+                    // Use the active Clerk session to fetch a JWT for Supabase
+                    const session = window.Clerk.session;
+                    if (!session) {
+                        console.error('No active Clerk session -- cannot fetch token');
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    let token;
+                    try {
+                        token = await session.getToken({ template: 'supabase' });
+                    } catch (templateError) {
+                        console.warn('Supabase token template missing, using default Clerk token', templateError);
+                        token = await session.getToken();
+                    }
+
+                    console.log('Got Clerk session token, user ID:', clerkUser.id);
                     
                     if (!token) {
-                        console.error('No token received from Clerk');
+                        console.error('No token received from Clerk session');
                         setIsLoading(false);
                         return;
                     }
