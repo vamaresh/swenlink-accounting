@@ -448,8 +448,21 @@
             const openModal = (type, item = null) => {
                 setModalType(type);
                 setEditingId(item?.id || null);
-                const defaultData = item || {};
-                if ((type === 'invoice' || type === 'bill') && !item) {
+                const defaultData = item ? { ...item } : {};
+                if (type === 'invoice') {
+                    const subtotalVal = parseCurrencyValue(defaultData.subtotal);
+                    const vatRateVal = defaultData.vatRate !== undefined ? parseCurrencyValue(defaultData.vatRate, 0.20) : 0.20;
+                    const vatVal = defaultData.vat !== undefined ? parseCurrencyValue(defaultData.vat) : subtotalVal * vatRateVal;
+                    const derivedDiscount = item ? (subtotalVal + vatVal - parseCurrencyValue(defaultData.total)) : 0;
+                    defaultData.vatRate = vatRateVal;
+                    defaultData.vat = vatVal.toFixed(2);
+                    defaultData.discount = Math.max(parseCurrencyValue(defaultData.discount ?? derivedDiscount), 0).toFixed(2);
+                    const totalVal = subtotalVal + vatVal - parseCurrencyValue(defaultData.discount);
+                    defaultData.total = Math.max(totalVal, 0).toFixed(2);
+                    if (!item) {
+                        defaultData.subtotal = defaultData.subtotal || '';
+                    }
+                } else if (type === 'bill' && !item) {
                     defaultData.vatRate = 0.20;
                 }
                 setFormData(defaultData);
@@ -500,12 +513,14 @@
                             const iSub = parseFloat(formData.subtotal || 0);
                             const iRate = parseFloat(formData.vatRate || 0.20);
                             const iVAT = parseFloat(formData.vat || (iSub * iRate));
+                            const iDiscount = Math.max(parseFloat(formData.discount || 0), 0);
+                            const invoiceTotal = Math.max(iSub + iVAT - iDiscount, 0);
                             if (editingId) {
                                 await supabaseClient.from('invoices').update({
                                     customer_id: formData.customerId, invoice_number: formData.invoiceNumber,
                                     date: formData.date, due_date: formData.dueDate,
                                     description: formData.description, subtotal: iSub,
-                                    vat_rate: iRate, vat: iVAT, total: iSub + iVAT,
+                                    vat_rate: iRate, vat: iVAT, total: invoiceTotal,
                                     status: formData.status || 'unpaid'
                                 }).eq('id', editingId);
                             } else {
@@ -515,7 +530,7 @@
                                     date: formData.date || new Date().toISOString().split('T')[0],
                                     due_date: formData.dueDate, description: formData.description,
                                     subtotal: iSub, vat_rate: iRate, vat: iVAT,
-                                    total: iSub + iVAT, status: formData.status || 'unpaid'
+                                    total: invoiceTotal, status: formData.status || 'unpaid'
                                 });
                             }
                             break;
@@ -690,6 +705,7 @@
                 const customer = data.customers.find(c => c.id == invoice.customerId);
                 const printWindow = window.open('', '_blank');
                 const vatPercent = ((invoice.vatRate || 0.20) * 100).toFixed(0);
+                const discountValue = Math.max(((parseFloat(invoice.subtotal) || 0) + (parseFloat(invoice.vat) || 0) - (parseFloat(invoice.total) || 0)), 0);
                 
                 printWindow.document.write(`
                     <!DOCTYPE html>
@@ -772,6 +788,10 @@
                                 <span>VAT (${vatPercent}%):</span>
                                 <span>£${invoice.vat.toFixed(2)}</span>
                             </div>
+                            ${discountValue > 0 ? `<div class="total-row">
+                                <span>Discount:</span>
+                                <span>-£${discountValue.toFixed(2)}</span>
+                            </div>` : ''}
                             <div class="total-row final">
                                 <span>TOTAL:</span>
                                 <span>£${invoice.total.toFixed(2)}</span>
@@ -835,10 +855,13 @@
                 }
                 
                 const vatPercent = ((invoice.vatRate || 0.20) * 100).toFixed(0);
+                const discountValue = Math.max(((parseFloat(invoice.subtotal) || 0) + (parseFloat(invoice.vat) || 0) - (parseFloat(invoice.total) || 0)), 0);
                 const subject = `Invoice ${invoice.invoiceNumber} from ${data.company.name}`;
                 const body = `Dear ${customer.name},\n\nPlease find attached invoice ${invoice.invoiceNumber}.\n\nInvoice Details:\n- Date: ${invoice.date}\n- Due Date: ${invoice.dueDate}\n- Subtotal: £${invoice.subtotal.toFixed(2)}\n- VAT (${vatPercent}%): £${invoice.vat.toFixed(2)}\n- Total: £${invoice.total.toFixed(2)}\n\nDescription: ${invoice.description || 'N/A'}\n\nThank you for your business!\n\nBest regards,\n${data.company.name}\nReg No: ${data.company.regNumber || 'N/A'}\nTax No: ${data.company.taxNumber || 'N/A'}`;
+                const discountText = discountValue > 0 ? `\n- Discount: £${discountValue.toFixed(2)}` : '';
+                const bodyWithDiscount = body.replace('\n- Total:', `${discountText}\n- Total:`);
                 
-                const mailtoLink = `mailto:${customer.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                const mailtoLink = `mailto:${customer.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyWithDiscount)}`;
                 window.location.href = mailtoLink;
             };
 
@@ -907,23 +930,56 @@
                 }
             };
 
-            const updateInvoiceTotalsFromRate = (updates = {}) => {
-                setFormData((prev) => {
+            const parseCurrencyValue = (value, fallback = 0) => {
+                const num = parseFloat(value);
+                return Number.isFinite(num) ? num : fallback;
+            };
+
+            const recalcInvoiceSummary = (state) => {
+                const subtotal = parseCurrencyValue(state.subtotal);
+                const vatRate = parseCurrencyValue(state.vatRate ?? 0.20, 0.20);
+                const discount = parseCurrencyValue(state.discount);
+                const vatValue = subtotal * vatRate;
+                const totalValue = subtotal + vatValue - discount;
+                return {
+                    vat: vatValue.toFixed(2),
+                    discount: state.discount !== undefined ? (Math.max(discount, 0)).toFixed(2) : undefined,
+                    total: Math.max(totalValue, 0).toFixed(2)
+                };
+            };
+
+            const updateInvoiceAmounts = (updates = {}, { formatSubtotal = false, formatDiscount = false } = {}) => {
+                setFormData(prev => {
                     const next = { ...prev, ...updates };
-                    const parseValue = (value, fallback = 0) => {
-                        const num = parseFloat(value);
-                        return Number.isFinite(num) ? num : fallback;
-                    };
-                    const rate = parseValue(next.dayRate);
-                    const days = parseValue(next.numberOfDays);
-                    const subtotal = rate * days;
-                    const vatRate = parseValue(next.vatRate ?? 0.20, 0.20);
-                    const subtotalValue = Number.isFinite(subtotal) ? subtotal : 0;
-                    const vatValue = subtotalValue * vatRate;
+                    if (formatSubtotal && next.subtotal !== undefined) {
+                        next.subtotal = parseCurrencyValue(next.subtotal).toFixed(2);
+                    }
+                    if (formatDiscount && next.discount !== undefined) {
+                        next.discount = Math.max(parseCurrencyValue(next.discount), 0).toFixed(2);
+                    }
+                    const summary = recalcInvoiceSummary(next);
                     return {
                         ...next,
-                        subtotal: subtotalValue.toFixed(2),
-                        vat: vatValue.toFixed(2)
+                        vat: summary.vat,
+                        discount: summary.discount ?? next.discount,
+                        total: summary.total
+                    };
+                });
+            };
+
+            const updateInvoiceTotalsFromRate = (updates = {}) => {
+                setFormData(prev => {
+                    const next = { ...prev, ...updates };
+                    const rate = parseCurrencyValue(next.dayRate);
+                    const days = parseCurrencyValue(next.numberOfDays);
+                    const subtotalValue = rate * days;
+                    return {
+                        ...next,
+                        subtotal: Number.isFinite(subtotalValue) ? subtotalValue.toFixed(2) : next.subtotal,
+                        ...recalcInvoiceSummary({
+                            ...next,
+                            subtotal: Number.isFinite(subtotalValue) ? subtotalValue : next.subtotal
+                        })
                     };
                 });
             };
@@ -1100,17 +1156,17 @@
                         {name: 'dueDate', label: 'Due Date', type: 'date', required: true},
                         {name: 'description', label: 'Description', type: 'textarea'},
                         {name: 'subtotal', label: 'Subtotal (£)', type: 'number', required: true, step: '0.01', onChange: (val) => {
-                            const vatRate = parseFloat(formData.vatRate || 0.20);
-                            const vat = (parseFloat(val) || 0) * vatRate;
-                            setFormData({...formData, subtotal: val, vat: vat.toFixed(2)});
+                            updateInvoiceAmounts({ subtotal: val });
+                        }},
+                        {name: 'discount', label: 'Discount (£)', type: 'number', step: '0.01', defaultValue: '0.00', onChange: (val) => {
+                            updateInvoiceAmounts({ discount: val });
                         }},
                         {name: 'vatRate', label: 'VAT Rate (e.g. 0.20 for 20%)', type: 'number', required: true, step: '0.01', defaultValue: 0.20, onChange: (val) => {
-                            const vatRate = parseFloat(val) || 0.20;
-                            const vat = (parseFloat(formData.subtotal) || 0) * vatRate;
-                            setFormData({...formData, vatRate: val, vat: vat.toFixed(2)});
+                            updateInvoiceAmounts({ vatRate: val });
                         }},
                         {name: 'vat', label: 'VAT Amount (£)', type: 'number', required: true, step: '0.01', readOnly: true},
-                        {name: 'status', label: 'Status', type: 'select', options: [{id: 'unpaid', name: 'Unpaid'}, {id: 'paid', name: 'Paid'}, {id: 'overdue', name: 'Overdue'}]}
+                        {name: 'status', label: 'Status', type: 'select', options: [{id: 'unpaid', name: 'Unpaid'}, {id: 'paid', name: 'Paid'}, {id: 'overdue', name: 'Overdue'}]},
+                        {name: 'total', label: 'Total (£)', type: 'number', readOnly: true}
                     ],
                     bill: [
                         {name: 'supplierId', label: 'Supplier', type: 'select', options: data.suppliers, required: true},
@@ -1178,100 +1234,157 @@
                                 </button>
                             </div>
                             <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4">
-                                {fields[modalType]?.map(field => (
-                                    <React.Fragment key={field.name}>
-                                        {modalType === 'invoice' && field.name === 'subtotal' && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Day Rate (£)</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={formData.dayRate || ''}
-                                                        onChange={(e) => updateInvoiceTotalsFromRate({ dayRate: e.target.value })}
-                                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">No. of Days Worked</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.1"
-                                                        value={formData.numberOfDays || ''}
-                                                        onChange={(e) => updateInvoiceTotalsFromRate({ numberOfDays: e.target.value })}
-                                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                {field.label} {field.required && <span className="text-red-500">*</span>}
-                                            </label>
-                                            {field.type === 'file-images' ? (
-                                            <div>
-                                                <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
-                                                    <Icon name="Camera" className="w-5 h-5 text-gray-500" />
-                                                    <span className="text-sm text-gray-600">Upload Image</span>
-                                                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                {(() => {
+                                    const renderFieldBlock = (field, keyOverride) => {
+                                        if (!field) return null;
+                                        return (
+                                            <div key={keyOverride || field.name}>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    {field.label} {field.required && <span className="text-red-500">*</span>}
                                                 </label>
-                                                {formData.images && formData.images.length > 0 && (
-                                                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                                        {formData.images.map((img, idx) => (
-                                                            <div key={idx} className="relative group">
-                                                                <img src={img} alt={`Upload ${idx + 1}`} className="image-thumbnail w-full h-24 object-cover rounded border" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => removeImage(idx)}
-                                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                >
-                                                                    <Icon name="X" className="w-4 h-4" />
-                                                                </button>
+                                                {field.type === 'file-images' ? (
+                                                    <div>
+                                                        <label className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                                                            <Icon name="Camera" className="w-5 h-5 text-gray-500" />
+                                                            <span className="text-sm text-gray-600">Upload Image</span>
+                                                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                                        </label>
+                                                        {formData.images && formData.images.length > 0 && (
+                                                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                                {formData.images.map((img, idx) => (
+                                                                    <div key={idx} className="relative group">
+                                                                        <img src={img} alt={`Upload ${idx + 1}`} className="image-thumbnail w-full h-24 object-cover rounded border" />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removeImage(idx)}
+                                                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        >
+                                                                            <Icon name="X" className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        ))}
+                                                        )}
                                                     </div>
+                                                ) : field.type === 'textarea' ? (
+                                                    <textarea
+                                                        value={formData[field.name] || ''}
+                                                        onChange={(e) => setFormData({...formData, [field.name]: e.target.value})}
+                                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        rows="3"
+                                                        required={field.required}
+                                                    />
+                                                ) : field.type === 'select' ? (
+                                                    <select
+                                                        value={formData[field.name] || ''}
+                                                        onChange={(e) => setFormData({...formData, [field.name]: e.target.value})}
+                                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        required={field.required}
+                                                    >
+                                                        <option value="">Select {field.label}</option>
+                                                        {field.options?.map(opt => (
+                                                            <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type={field.type}
+                                                        value={formData[field.name] !== undefined ? formData[field.name] : (field.defaultValue !== undefined ? field.defaultValue : '')}
+                                                        onChange={(e) => {
+                                                            if (field.onChange) {
+                                                                field.onChange(e.target.value);
+                                                            } else {
+                                                                setFormData({...formData, [field.name]: e.target.value});
+                                                            }
+                                                        }}
+                                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        required={field.required}
+                                                        step={field.step}
+                                                        readOnly={field.readOnly}
+                                                    />
                                                 )}
                                             </div>
-                                            ) : field.type === 'textarea' ? (
-                                            <textarea
-                                                value={formData[field.name] || ''}
-                                                onChange={(e) => setFormData({...formData, [field.name]: e.target.value})}
-                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                rows="3"
-                                                required={field.required}
-                                            />
-                                            ) : field.type === 'select' ? (
-                                            <select
-                                                value={formData[field.name] || ''}
-                                                onChange={(e) => setFormData({...formData, [field.name]: e.target.value})}
-                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                required={field.required}
-                                            >
-                                                <option value="">Select {field.label}</option>
-                                                {field.options?.map(opt => (
-                                                    <option key={opt.id} value={opt.id}>{opt.name}</option>
-                                                ))}
-                                            </select>
-                                            ) : (
-                                            <input
-                                                type={field.type}
-                                                value={formData[field.name] !== undefined ? formData[field.name] : (field.defaultValue !== undefined ? field.defaultValue : '')}
-                                                onChange={(e) => {
-                                                    if (field.onChange) {
-                                                        field.onChange(e.target.value);
-                                                    } else {
-                                                        setFormData({...formData, [field.name]: e.target.value});
-                                                    }
-                                                }}
-                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                                required={field.required}
-                                                step={field.step}
-                                                readOnly={field.readOnly}
-                                            />
-                                            )}
-                                        </div>
-                                    </React.Fragment>
-                                ))}
+                                        );
+                                    };
+
+                                    const renderInvoiceFields = () => {
+                                        const fieldList = fields[modalType] || [];
+                                        const skip = new Set();
+                                        const blocks = [];
+                                        fieldList.forEach((field) => {
+                                            if (skip.has(field.name)) return;
+
+                                            if (field.name === 'date') {
+                                                const dueField = fieldList.find(f => f.name === 'dueDate');
+                                                if (dueField) skip.add('dueDate');
+                                                blocks.push(
+                                                    <div key="invoice-date-row" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {renderFieldBlock(field, 'invoice-date')}
+                                                        {dueField ? renderFieldBlock(dueField, 'invoice-due') : null}
+                                                    </div>
+                                                );
+                                                return;
+                                            }
+
+                                            if (field.name === 'subtotal') {
+                                                const discountField = fieldList.find(f => f.name === 'discount');
+                                                if (discountField) skip.add('discount');
+                                                blocks.push(
+                                                    <React.Fragment key="invoice-subtotal-block">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-1">Day Rate (£)</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    value={formData.dayRate || ''}
+                                                                    onChange={(e) => updateInvoiceTotalsFromRate({ dayRate: e.target.value })}
+                                                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-1">No. of Days Worked</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.1"
+                                                                    value={formData.numberOfDays || ''}
+                                                                    onChange={(e) => updateInvoiceTotalsFromRate({ numberOfDays: e.target.value })}
+                                                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            {renderFieldBlock(field, 'invoice-subtotal')}
+                                                            {discountField ? renderFieldBlock(discountField, 'invoice-discount') : null}
+                                                        </div>
+                                                    </React.Fragment>
+                                                );
+                                                return;
+                                            }
+
+                                            if (field.name === 'vatRate') {
+                                                const vatField = fieldList.find(f => f.name === 'vat');
+                                                if (vatField) skip.add('vat');
+                                                blocks.push(
+                                                    <div key="invoice-vat-row" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {renderFieldBlock(field, 'invoice-vat-rate')}
+                                                        {vatField ? renderFieldBlock(vatField, 'invoice-vat') : null}
+                                                    </div>
+                                                );
+                                                return;
+                                            }
+
+                                            blocks.push(renderFieldBlock(field));
+                                        });
+                                        return blocks;
+                                    };
+
+                                    if (modalType === 'invoice') {
+                                        return renderInvoiceFields();
+                                    }
+
+                                    return (fields[modalType] || []).map(field => renderFieldBlock(field));
+                                })()}
                                 <div className="flex gap-3 pt-4">
                                     <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
                                         {editingId ? 'Update' : 'Create'}
