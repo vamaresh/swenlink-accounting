@@ -2500,103 +2500,103 @@
 
                         {activeTab === 'settings' && (
                             <form onSubmit={handleSaveSettings} className="grid gap-6 lg:grid-cols-2">
-                                <section className="surface-card rounded-2xl p-6 text-white space-y-5">
+                                <section className="bg-white rounded-2xl p-6 space-y-5">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs uppercase tracking-[0.3em] text-blue-300">Company</p>
-                                            <h3 className="text-2xl font-semibold">Profile & Compliance</h3>
-                                            <p className="text-sm text-slate-300 mt-1">Keep Companies House and HMRC details aligned.</p>
+                                            <p className="text-xs uppercase tracking-[0.3em] text-blue-600">Company</p>
+                                            <h3 className="text-2xl font-semibold text-gray-900">Profile & Compliance</h3>
+                                            <p className="text-sm text-gray-600 mt-1">Keep Companies House and HMRC details aligned.</p>
                                         </div>
-                                        <Icon name="Building2" className="w-10 h-10 text-blue-400" />
+                                        <Icon name="Building2" className="w-10 h-10 text-blue-600" />
                                     </div>
                                     <div className="space-y-4">
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Company Name
                                             <input
                                                 type="text"
                                                 value={settingsForm.name}
                                                 onChange={e => handleSettingsInputChange('name', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Swenlink Consulting Ltd"
                                             />
                                         </label>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                            <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                                 Registration Number
                                                 <input
                                                     type="text"
                                                     value={settingsForm.regNumber}
                                                     onChange={e => handleSettingsInputChange('regNumber', e.target.value)}
-                                                    className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                                                    className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                     placeholder="12345678"
                                                 />
                                             </label>
-                                            <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                            <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                                 VAT / Tax Number
                                                 <input
                                                     type="text"
                                                     value={settingsForm.taxNumber}
                                                     onChange={e => handleSettingsInputChange('taxNumber', e.target.value)}
-                                                    className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                                                    className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                     placeholder="GB123456789"
                                                 />
                                             </label>
                                         </div>
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Registered Address
                                             <textarea
                                                 rows="3"
                                                 value={settingsForm.address}
                                                 onChange={e => handleSettingsInputChange('address', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="100 Bishopsgate, London EC2N 4AA"
                                             />
                                         </label>
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Financial Year Start
                                             <input
                                                 type="date"
                                                 value={settingsForm.financialYearStart || ''}
                                                 onChange={e => handleSettingsInputChange('financialYearStart', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
                                         </label>
                                     </div>
                                 </section>
-                                <section className="surface-card rounded-2xl p-6 text-white space-y-5">
+                                <section className="bg-white rounded-2xl p-6 space-y-5">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">Preferences</p>
-                                            <h3 className="text-2xl font-semibold">Operating Defaults</h3>
-                                            <p className="text-sm text-slate-300 mt-1">These drive invoice numbers, currency symbols, and reminder cadence.</p>
+                                            <p className="text-xs uppercase tracking-[0.3em] text-emerald-600">Preferences</p>
+                                            <h3 className="text-2xl font-semibold text-gray-900">Operating Defaults</h3>
+                                            <p className="text-sm text-gray-600 mt-1">These drive invoice numbers, currency symbols, and reminder cadence.</p>
                                         </div>
-                                        <Icon name="TrendingUp" className="w-10 h-10 text-emerald-300" />
+                                        <Icon name="TrendingUp" className="w-10 h-10 text-emerald-600" />
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Base Currency
                                             <select
                                                 value={settingsForm.currency}
                                                 onChange={e => handleSettingsInputChange('currency', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                             >
                                                 <option value="GBP">GBP • Pound Sterling</option>
                                                 <option value="EUR">EUR • Euro</option>
                                                 <option value="USD">USD • US Dollar</option>
                                             </select>
                                         </label>
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Invoice Prefix
                                             <input
                                                 type="text"
                                                 value={settingsForm.invoicePrefix}
                                                 onChange={e => handleSettingsInputChange('invoicePrefix', e.target.value.toUpperCase())}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                                 placeholder="INV"
                                                 maxLength="6"
                                             />
                                         </label>
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Payment Terms (days)
                                             <input
                                                 type="number"
@@ -2604,54 +2604,54 @@
                                                 max="120"
                                                 value={settingsForm.paymentTerms}
                                                 onChange={e => handleSettingsInputChange('paymentTerms', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                             />
                                         </label>
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Auto-reminders
                                             <div className="mt-2 flex items-center gap-3">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSettingsInputChange('autoReminders', !settingsForm.autoReminders)}
-                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settingsForm.autoReminders ? 'bg-emerald-400' : 'bg-white/20'}`}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settingsForm.autoReminders ? 'bg-emerald-500' : 'bg-gray-300'}`}
                                                 >
                                                     <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${settingsForm.autoReminders ? 'translate-x-5' : 'translate-x-1'}`}></span>
                                                 </button>
-                                                <span className="text-sm text-slate-200">Send polite nudges {settingsForm.paymentTerms || defaultPreferences.paymentTerms} days after due.</span>
+                                                <span className="text-sm text-gray-700">Send polite nudges {settingsForm.paymentTerms || defaultPreferences.paymentTerms} days after due.</span>
                                             </div>
                                         </label>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Theme
                                             <select
                                                 value={settingsForm.theme}
                                                 onChange={e => handleSettingsInputChange('theme', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                             >
                                                 <option value="dark">Dark Mode</option>
                                                 <option value="light">Light Mode</option>
                                                 <option value="auto">Auto (System)</option>
                                             </select>
                                         </label>
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Font Size
                                             <select
                                                 value={settingsForm.fontSize}
                                                 onChange={e => handleSettingsInputChange('fontSize', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                             >
                                                 <option value="small">Small</option>
                                                 <option value="medium">Medium</option>
                                                 <option value="large">Large</option>
                                             </select>
                                         </label>
-                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Font Style
                                             <select
                                                 value={settingsForm.fontFamily}
                                                 onChange={e => handleSettingsInputChange('fontFamily', e.target.value)}
-                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                             >
                                                 <option value="space-grotesk">Space Grotesk</option>
                                                 <option value="inter">Inter</option>
@@ -2660,17 +2660,17 @@
                                             </select>
                                         </label>
                                     </div>
-                                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                                        <p className="text-xs uppercase tracking-wide text-slate-400">Preview</p>
-                                        <p className="text-lg font-semibold mt-2">{settingsForm.invoicePrefix || 'INV'}-2025-001</p>
-                                        <p className="text-sm text-slate-300">Due in {settingsForm.paymentTerms || defaultPreferences.paymentTerms} days • Currency {settingsForm.currency}</p>
-                                        <p className="text-xs text-slate-400 mt-2">{settingsForm.autoReminders ? 'Automatic reminder workflow enabled.' : 'Reminders are currently disabled.'}</p>
+                                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                                        <p className="text-xs uppercase tracking-wide text-gray-600">Preview</p>
+                                        <p className="text-lg font-semibold text-gray-900 mt-2">{settingsForm.invoicePrefix || 'INV'}-2025-001</p>
+                                        <p className="text-sm text-gray-700">Due in {settingsForm.paymentTerms || defaultPreferences.paymentTerms} days • Currency {settingsForm.currency}</p>
+                                        <p className="text-xs text-gray-600 mt-2">{settingsForm.autoReminders ? 'Automatic reminder workflow enabled.' : 'Reminders are currently disabled.'}</p>
                                     </div>
                                 </section>
-                                <div className="surface-card rounded-2xl p-4 text-white flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
+                                <div className="bg-white rounded-2xl p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
                                     <div>
-                                        <p className="text-base font-semibold">Stay audit ready</p>
-                                        <p className="text-sm text-slate-300">We snapshot every change alongside the user ID so you can evidence governance.</p>
+                                        <p className="text-base font-semibold text-gray-900">Stay audit ready</p>
+                                        <p className="text-sm text-gray-600">We snapshot every change alongside the user ID so you can evidence governance.</p>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                                         <button
