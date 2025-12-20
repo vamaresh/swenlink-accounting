@@ -1,7 +1,7 @@
 # Complete Premium Implementation - Ready to Deploy
 
 ## Quick Summary
-I've created `index-premium.html` as a copy of `index.html`. To complete the Clerk + Supabase integration, the file needs ~200 lines of changes across 5 sections.
+The Clerk + Supabase build now lives directly at `index.html` (the old local-storage-only version is stored in `index.html.backup`).
 
 Given time/token constraints, here's the **fastest path to production**:
 

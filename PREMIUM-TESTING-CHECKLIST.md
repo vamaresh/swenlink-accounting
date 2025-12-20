@@ -1,7 +1,7 @@
 # Premium Version Testing Checklist
 
 ## How to Test
-1. Open `index-premium.html` in your browser
+1. Open `index.html` in your browser
 2. Follow the test cases below
 
 ## ✅ Test Cases

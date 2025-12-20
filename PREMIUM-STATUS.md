@@ -5,7 +5,7 @@
 
 ## Implementation Status
 
-Creating `index-premium.html` with full Clerk + Supabase integration.
+Maintaining `index.html` with full Clerk + Supabase integration.
 
 This is a production-ready SaaS application with:
 - Clerk authentication (no passwords stored)
@@ -17,10 +17,10 @@ This is a production-ready SaaS application with:
 
 ## Deployment Plan
 
-1. ✅ Keep `index.html` as fallback (localStorage)
-2. 🔨 Create `index-premium.html` (full cloud version)
-3. 🚀 Deploy both to GitHub Pages
-4. 🎯 Set `index-premium.html` as default
+1. ✅ Keep `index.html.backup` as fallback (localStorage-only build)
+2. ✅ Promote `index.html` as the full cloud version
+3. 🚀 Deploy to GitHub Pages
+4. 🎯 Keep `index.html` as the default entry point
 
 ## What Users Will Experience
 

@@ -1,5 +1,5 @@
 // Supabase Helper Functions for Premium Version
-// To be integrated into index-premium.html
+// Integrated directly into index.html (premium build)
 
 // ====================
 // CRUD OPERATIONS

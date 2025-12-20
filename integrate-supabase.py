@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to integrate Supabase CRUD operations into index-premium.html
+Script to integrate Supabase CRUD operations into index.html
 This replaces localStorage operations with Supabase API calls
 """
 
@@ -11,7 +11,7 @@ with open('supabase-helpers.js', 'r') as f:
     helpers = f.read()
 
 # Read the current premium file
-with open('index-premium.html', 'r') as f:
+with open('index.html', 'r') as f:
     content = f.read()
 
 # Extract the helper functions (without the JS comments at top)
@@ -66,10 +66,10 @@ new_handle_delete = '''const handleDelete = async (type, id) => {
 content = re.sub(old_handle_delete_pattern, new_handle_delete, content, flags=re.DOTALL)
 
 # Write the updated content
-with open('index-premium.html', 'w') as f:
+with open('index.html', 'w') as f:
     f.write(content)
 
-print("✅ Successfully integrated Supabase operations into index-premium.html")
+print("✅ Successfully integrated Supabase operations into index.html")
 print("Next steps:")
 print("1. Test the application")
 print("2. Verify CRUD operations work")

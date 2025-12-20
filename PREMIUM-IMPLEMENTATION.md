@@ -1,8 +1,8 @@
 # Premium Version Implementation Plan
 
-## File: `index-premium.html`
+## File: `index.html`
 
-This will be a complete implementation with Clerk + Supabase integration.
+This is now the complete implementation with Clerk + Supabase integration.
 
 ## Key Differences from Free Version:
 
@@ -50,7 +50,7 @@ When you sign up:
 ## Usage:
 
 ### For Testing:
-1. Open `index-premium.html` in browser
+1. Open `index.html` in browser
 2. Click "Sign Up" (Clerk UI)
 3. Complete signup process
 4. Set up company details
@@ -59,7 +59,7 @@ When you sign up:
 ### For Production:
 1. Get Stripe keys
 2. Add payment flow
-3. Replace `index.html` with `index-premium.html`
-4. Deploy to GitHub Pages
+3. Deploy `index.html` (premium build)
+4. Push to GitHub Pages or preferred host
 
 Would you like me to proceed with creating this file?
