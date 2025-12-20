@@ -43,7 +43,11 @@
         .glass-panel { background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 10px 45px rgba(15,23,42,0.35); }
         .surface-card { background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(226, 232, 240, 0.08); }
         .modal-backdrop { backdrop-filter: blur(4px); }
-        .sidebar { transition: transform 0.3s ease, width 0.3s ease; }
+        .sidebar { transition: transform 0.3s ease, width 0.3s ease; display: flex; flex-direction: column; }
+        .sidebar-nav { flex: 1; overflow-y: auto; overflow-x: hidden; }
+        .sidebar-nav::-webkit-scrollbar { width: 4px; }
+        .sidebar-nav::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
         @media print { .no-print { display: none; } }
         .sidebar-item { transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(59, 130, 246, 0.2); }
@@ -88,7 +92,10 @@
             currency: 'GBP',
             invoicePrefix: 'INV',
             paymentTerms: 30,
-            autoReminders: true
+            autoReminders: true,
+            theme: 'dark',
+            fontSize: 'medium',
+            fontFamily: 'space-grotesk'
         };
 
         // Icon Component (simplified SVG icons)
@@ -240,7 +247,10 @@
                 currency: defaultPreferences.currency,
                 invoicePrefix: defaultPreferences.invoicePrefix,
                 paymentTerms: defaultPreferences.paymentTerms,
-                autoReminders: defaultPreferences.autoReminders
+                autoReminders: defaultPreferences.autoReminders,
+                theme: defaultPreferences.theme,
+                fontSize: defaultPreferences.fontSize,
+                fontFamily: defaultPreferences.fontFamily
             });
             const [savingSettings, setSavingSettings] = useState(false);
             
@@ -555,7 +565,10 @@
                     currency: preferences.currency,
                     invoicePrefix: preferences.invoicePrefix,
                     paymentTerms: preferences.paymentTerms,
-                    autoReminders: preferences.autoReminders
+                    autoReminders: preferences.autoReminders,
+                    theme: preferences.theme,
+                    fontSize: preferences.fontSize,
+                    fontFamily: preferences.fontFamily
                 }));
             }, [preferences]);
 
@@ -786,7 +799,10 @@
                         currency: settingsForm.currency || defaultPreferences.currency,
                         invoicePrefix: (settingsForm.invoicePrefix || defaultPreferences.invoicePrefix).toUpperCase(),
                         paymentTerms: Number(settingsForm.paymentTerms) || defaultPreferences.paymentTerms,
-                        autoReminders: Boolean(settingsForm.autoReminders)
+                        autoReminders: Boolean(settingsForm.autoReminders),
+                        theme: settingsForm.theme || defaultPreferences.theme,
+                        fontSize: settingsForm.fontSize || defaultPreferences.fontSize,
+                        fontFamily: settingsForm.fontFamily || defaultPreferences.fontFamily
                     };
 
                     setPreferences(normalizedPrefs);
@@ -2108,7 +2124,7 @@
                             )}
                         </div>
                         
-                        <nav className={sidebarCollapsed ? 'p-2' : 'p-4'}>
+                        <nav className={`sidebar-nav ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
                             {menuItems.map(item => (
                                 <button
                                     key={item.id}
@@ -2124,7 +2140,7 @@
                             ))}
                         </nav>
                         
-                        <div className="absolute bottom-0 w-full border-t border-gray-700 p-3 space-y-2">
+                        <div className="w-full border-t border-gray-700 p-3 space-y-2 flex-shrink-0">
                             {!sidebarCollapsed && (
                                 <div className="px-1">
                                     <p className="text-xs text-gray-400">Logged in as</p>
@@ -2492,6 +2508,45 @@
                                             </div>
                                         </label>
                                     </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                            Theme
+                                            <select
+                                                value={settingsForm.theme}
+                                                onChange={e => handleSettingsInputChange('theme', e.target.value)}
+                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                            >
+                                                <option value="dark">Dark Mode</option>
+                                                <option value="light">Light Mode</option>
+                                                <option value="auto">Auto (System)</option>
+                                            </select>
+                                        </label>
+                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                            Font Size
+                                            <select
+                                                value={settingsForm.fontSize}
+                                                onChange={e => handleSettingsInputChange('fontSize', e.target.value)}
+                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                            >
+                                                <option value="small">Small</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="large">Large</option>
+                                            </select>
+                                        </label>
+                                        <label className="block text-xs font-semibold tracking-wide text-slate-400">
+                                            Font Style
+                                            <select
+                                                value={settingsForm.fontFamily}
+                                                onChange={e => handleSettingsInputChange('fontFamily', e.target.value)}
+                                                className="w-full mt-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+                                            >
+                                                <option value="space-grotesk">Space Grotesk</option>
+                                                <option value="inter">Inter</option>
+                                                <option value="system">System Default</option>
+                                                <option value="monospace">Monospace</option>
+                                            </select>
+                                        </label>
+                                    </div>
                                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                                         <p className="text-xs uppercase tracking-wide text-slate-400">Preview</p>
                                         <p className="text-lg font-semibold mt-2">{settingsForm.invoicePrefix || 'INV'}-2025-001</p>
@@ -2517,7 +2572,10 @@
                                                     currency: preferences.currency,
                                                     invoicePrefix: preferences.invoicePrefix,
                                                     paymentTerms: preferences.paymentTerms,
-                                                    autoReminders: preferences.autoReminders
+                                                    autoReminders: preferences.autoReminders,
+                                                    theme: preferences.theme,
+                                                    fontSize: preferences.fontSize,
+                                                    fontFamily: preferences.fontFamily
                                                 });
                                             }}
                                             className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
