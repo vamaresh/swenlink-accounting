@@ -114,6 +114,29 @@
         body[data-theme="light"] .text-gray-800 { color: #1e293b !important; }
         body[data-theme="light"] .bg-gray-50 { background: #f8fafc !important; }
         body[data-theme="light"] table { color: #0f172a !important; }
+        
+        /* Dark mode: ensure dark text on white backgrounds */
+        body[data-theme="dark"] .bg-white { color: #0f172a !important; }
+        body[data-theme="dark"] .bg-white .text-gray-500 { color: #64748b !important; }
+        body[data-theme="dark"] .bg-white .text-gray-600 { color: #475569 !important; }
+        body[data-theme="dark"] .bg-white .text-gray-700 { color: #334155 !important; }
+        body[data-theme="dark"] .bg-white .text-gray-800 { color: #1e293b !important; }
+        body[data-theme="dark"] .bg-white .text-gray-900 { color: #0f172a !important; }
+        body[data-theme="dark"] .bg-white h1,
+        body[data-theme="dark"] .bg-white h2,
+        body[data-theme="dark"] .bg-white h3,
+        body[data-theme="dark"] .bg-white h4,
+        body[data-theme="dark"] .bg-white h5,
+        body[data-theme="dark"] .bg-white h6 { color: #0f172a !important; }
+        body[data-theme="dark"] .bg-white table { color: #0f172a !important; }
+        body[data-theme="dark"] .bg-white th { color: #0f172a !important; }
+        body[data-theme="dark"] .bg-white td { color: #334155 !important; }
+        body[data-theme="dark"] .bg-white label { color: #334155 !important; }
+        body[data-theme="dark"] .bg-white input,
+        body[data-theme="dark"] .bg-white textarea,
+        body[data-theme="dark"] .bg-white select { color: #0f172a !important; }
+        body[data-theme="dark"] .bg-white .bg-gray-50 { background: #f8fafc !important; }
+        
         .modal-backdrop { backdrop-filter: blur(4px); }
         .sidebar { transition: transform 0.3s ease, width 0.3s ease; display: flex; flex-direction: column; }
         .sidebar-nav { flex: 1; overflow-y: auto; overflow-x: hidden; }
