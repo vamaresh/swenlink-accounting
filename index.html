@@ -60,9 +60,13 @@
             --text-secondary: var(--text-secondary-light);
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
         }
+        html { font-size: 16px; } /* Default base size */
         body[data-font-size="small"] { font-size: 14px; }
         body[data-font-size="medium"] { font-size: 16px; }
         body[data-font-size="large"] { font-size: 18px; }
+        html:has(body[data-font-size="small"]) { font-size: 14px; }
+        html:has(body[data-font-size="medium"]) { font-size: 16px; }
+        html:has(body[data-font-size="large"]) { font-size: 18px; }
         body[data-font-family="space-grotesk"] { font-family: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body[data-font-family="inter"] { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body[data-font-family="system"] { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
