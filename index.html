@@ -71,6 +71,16 @@
         body { margin: 0; font-family: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--app-bg); color: var(--text-primary, #0f172a); transition: background 0.3s ease, color 0.3s ease; }
         input, textarea, select, button { font-size: inherit; font-family: inherit; }
         
+        /* Global font size scaling - all Tailwind text classes now scale with base font size */
+        .text-xs { font-size: 0.75rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-base { font-size: 1rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-3xl { font-size: 1.875rem; }
+        .text-4xl { font-size: 2.25rem; }
+        
         .app-shell { min-height: 100vh; }
         .content-shell { width: 100%; }
         .glass-panel { background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
@@ -159,13 +169,11 @@
         @media (max-width: 768px) {
             .main-content { padding: 1rem !important; }
             .grid { grid-template-columns: 1fr !important; }
-            table { font-size: 14px; }
+            table { font-size: 0.875rem; }
             .modal-content { max-height: 90vh; overflow-y: auto; }
         }
         
         @media (max-width: 480px) {
-            .text-3xl { font-size: 1.5rem !important; }
-            .text-2xl { font-size: 1.25rem !important; }
             .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
             .py-8 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
         }
