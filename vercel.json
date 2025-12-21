@@ -52,18 +52,27 @@
   "redirects": [
     {
       "source": "/index-premium.html",
-      "destination": "/",
+      "destination": "/app",
       "permanent": true
+    },
+    {
+      "source": "/app",
+      "destination": "/index.html",
+      "permanent": false
     }
   ],
   "rewrites": [
     {
       "source": "/",
+      "destination": "/landing.html"
+    },
+    {
+      "source": "/app",
       "destination": "/index.html"
     },
     {
-      "source": "/:path((?!sw\\.js$|manifest\\.json$|icon-).*)",
-      "destination": "/index.html"
+      "source": "/:path((?!sw\\.js$|manifest\\.json$|icon-|landing\\.html$|index\\.html$).*)",
+      "destination": "/landing.html"
     }
   ]
 }
