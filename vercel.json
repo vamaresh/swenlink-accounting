@@ -1,12 +1,9 @@
 {
   "version": 2,
   "name": "swenbooks",
-  "public": false,
+  "public": true,
   "github": {
     "silent": true
-  },
-  "env": {
-    "VERCEL_PASSWORD": "swenbooks-beta-2025"
   },
   "headers": [
     {
@@ -25,40 +22,6 @@
           "value": "1; mode=block"
         }
       ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        },
-        {
-          "key": "Service-Worker-Allowed",
-          "value": "/"
-        }
-      ]
-    },
-    {
-      "source": "/manifest.json",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/manifest+json"
-        }
-      ]
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/index-premium.html",
-      "destination": "/app",
-      "permanent": true
-    },
-    {
-      "source": "/app",
-      "destination": "/index.html",
-      "permanent": false
     }
   ],
   "rewrites": [
@@ -69,10 +32,6 @@
     {
       "source": "/app",
       "destination": "/index.html"
-    },
-    {
-      "source": "/:path((?!sw\\.js$|manifest\\.json$|icon-|landing\\.html$|index\\.html$).*)",
-      "destination": "/landing.html"
     }
   ]
 }
