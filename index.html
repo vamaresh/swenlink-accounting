@@ -971,6 +971,11 @@
                     defaultData.total = Math.max(totalVal, 0).toFixed(2);
                     if (!item) {
                         defaultData.subtotal = defaultData.subtotal || '';
+                        // Auto-generate invoice number with prefix
+                        const prefix = preferences.invoicePrefix || 'INV';
+                        const year = new Date().getFullYear();
+                        const nextNumber = (data.invoices.length + 1).toString().padStart(3, '0');
+                        defaultData.invoiceNumber = `${prefix}-${year}-${nextNumber}`;
                     }
                 } else if (type === 'bill') {
                     const subtotalVal = parseCurrencyValue(defaultData.subtotal);
