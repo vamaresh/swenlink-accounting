@@ -1402,16 +1402,16 @@
                                         <p style="margin: 5px 0; color: #666;"><strong>Account Name:</strong></p>
                                         <p style="margin: 5px 0; color: #333;">${data.bankAccounts[0].name || 'N/A'}</p>
                                     </div>
-                                    ${data.bankAccounts[0].accountNumber ? `
+                                    ${data.bankAccounts[0].accountNumber || data.bankAccounts[0].account_number ? `
                                     <div>
                                         <p style="margin: 5px 0; color: #666;"><strong>Account Number:</strong></p>
-                                        <p style="margin: 5px 0; color: #333; font-family: monospace;">${data.bankAccounts[0].accountNumber}</p>
+                                        <p style="margin: 5px 0; color: #333; font-family: monospace;">${data.bankAccounts[0].accountNumber || data.bankAccounts[0].account_number}</p>
                                     </div>
                                     ` : ''}
-                                    ${data.bankAccounts[0].sortCode ? `
+                                    ${data.bankAccounts[0].sortCode || data.bankAccounts[0].sort_code ? `
                                     <div>
                                         <p style="margin: 5px 0; color: #666;"><strong>Sort Code:</strong></p>
-                                        <p style="margin: 5px 0; color: #333; font-family: monospace;">${data.bankAccounts[0].sortCode}</p>
+                                        <p style="margin: 5px 0; color: #333; font-family: monospace;">${data.bankAccounts[0].sortCode || data.bankAccounts[0].sort_code}</p>
                                     </div>
                                     ` : ''}
                                 ` : '<p style="color: #999;">No bank account information available</p>'}
