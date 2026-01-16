@@ -1501,6 +1501,188 @@
                 }, 250);
             };
 
+            const viewInvoice = (invoice) => {
+                // Open invoice in a new window for viewing (same as PDF but without print dialog)
+                const customer = data.customers.find(c => c.id == invoice.customerId);
+                const printWindow = window.open('', '_blank');
+                const vatPercent = ((invoice.vatRate || 0.20) * 100).toFixed(0);
+                const discountValue = calculateInvoiceDiscount(invoice);
+                const hasDiscount = discountValue >= 0.005;
+                
+                // Check if invoice has line items
+                const lineItemsArray = invoice.lineItems || invoice.line_items || [];
+                const hasLineItems = Array.isArray(lineItemsArray) && lineItemsArray.length > 0;
+                
+                // Generate line items table rows
+                let tableRows = '';
+                if (hasLineItems) {
+                    tableRows = lineItemsArray.map(item => {
+                        const includeVAT = item.includeVAT !== undefined ? item.includeVAT : (item.include_vat !== undefined ? item.include_vat : true);
+                        return `
+                        <tr>
+                            <td>${item.description || ''}</td>
+                            <td style="text-align: center;">${item.quantity || 1}</td>
+                            <td style="text-align: right;">£${(parseFloat(item.unitPrice || item.unit_price || 0)).toFixed(2)}</td>
+                            <td style="text-align: right;">£${(parseFloat(item.amount || 0)).toFixed(2)}</td>
+                            <td style="text-align: center;">${includeVAT ? '✓' : '—'}</td>
+                        </tr>
+                    `;
+                    }).join('');
+                } else {
+                    // Fallback to single description line
+                    tableRows = `
+                        <tr>
+                            <td colspan="4">${invoice.description || 'Services Rendered'}</td>
+                            <td style="text-align: right;">£${invoice.subtotal.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+                
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Invoice ${invoice.invoiceNumber}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                            .header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
+                            .company { font-size: 24px; font-weight: bold; color: #2563eb; }
+                            .company-details { font-size: 12px; color: #666; margin-top: 5px; }
+                            .invoice-title { font-size: 32px; font-weight: bold; color: #333; }
+                            .invoice-number { font-size: 14px; color: #666; }
+                            .details-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                            .details-box { width: 48%; }
+                            .details-box h3 { margin: 0 0 10px 0; color: #2563eb; font-size: 14px; }
+                            .details-box p { margin: 5px 0; font-size: 13px; color: #333; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th { background: #f3f4f6; padding: 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #ddd; }
+                            td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+                            .total-section { margin-top: 20px; float: right; width: 300px; }
+                            .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+                            .total-row.final { border-top: 2px solid #333; font-weight: bold; font-size: 18px; color: #2563eb; margin-top: 10px; padding-top: 10px; }
+                            .footer { margin-top: 80px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+                            .action-buttons { margin: 20px 0; text-align: center; }
+                            .action-buttons button { margin: 0 10px; padding: 10px 20px; font-size: 14px; cursor: pointer; border: none; border-radius: 5px; }
+                            .print-btn { background: #2563eb; color: white; }
+                            .print-btn:hover { background: #1d4ed8; }
+                            @media print { .action-buttons { display: none; } body { padding: 20px; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="action-buttons">
+                            <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+                        </div>
+                        
+                        <div class="header">
+                            <div>
+                                <div class="company">${data.company.name}</div>
+                                <div class="company-details">
+                                    ${data.company.regNumber ? `Reg No: ${data.company.regNumber}<br>` : ''}
+                                    ${data.company.taxNumber ? `Tax No: ${data.company.taxNumber}<br>` : ''}
+                                    ${data.company.address ? data.company.address : ''}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="invoice-title">INVOICE</div>
+                                <div class="invoice-number">#${invoice.invoiceNumber}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="details-section">
+                            <div class="details-box">
+                                <h3>BILL TO:</h3>
+                                <p><strong>${customer?.name || 'Unknown Customer'}</strong></p>
+                                ${customer?.email ? `<p>${customer.email}</p>` : ''}
+                                ${customer?.phone ? `<p>${customer.phone}</p>` : ''}
+                                ${customer?.address ? `<p>${customer.address}</p>` : ''}
+                            </div>
+                            <div class="details-box" style="text-align: right;">
+                                <p><strong>Invoice Date:</strong> ${invoice.date}</p>
+                                <p><strong>Due Date:</strong> ${invoice.dueDate}</p>
+                                <p><strong>Status:</strong> <span style="text-transform: uppercase; color: ${invoice.status === 'paid' ? '#10b981' : invoice.status === 'overdue' ? '#ef4444' : '#f59e0b'};">${invoice.status}</span></p>
+                            </div>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    ${hasLineItems ? '<th style="text-align: center; width: 80px;">Qty</th>' : ''}
+                                    ${hasLineItems ? '<th style="text-align: right; width: 120px;">Unit Price</th>' : ''}
+                                    <th style="text-align: right; width: 120px;">Amount</th>
+                                    ${hasLineItems ? '<th style="text-align: center; width: 60px;">+VAT</th>' : ''}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                        
+                        <div class="total-section">
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span>£${invoice.subtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="total-row">
+                                <span>VAT (${vatPercent}%):</span>
+                                <span>£${invoice.vat.toFixed(2)}</span>
+                            </div>
+                            ${hasDiscount ? `<div class="total-row">
+                                <span>Discount:</span>
+                                <span>-£${discountValue.toFixed(2)}</span>
+                            </div>` : ''}
+                            <div class="total-row final">
+                                <span>TOTAL:</span>
+                                <span>£${invoice.total.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="clear: both;"></div>
+                        
+                        <div style="margin-top: 40px; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <h3 style="margin: 0 0 15px 0; color: #2563eb; font-size: 16px;">Payment Information</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
+                                ${data.bankAccounts && data.bankAccounts.length > 0 ? `
+                                    <div>
+                                        <p style="margin: 5px 0; color: #666;"><strong>Bank Name:</strong></p>
+                                        <p style="margin: 5px 0; color: #333;">${data.bankAccounts[0].bank || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p style="margin: 5px 0; color: #666;"><strong>Account Name:</strong></p>
+                                        <p style="margin: 5px 0; color: #333;">${data.bankAccounts[0].name || 'N/A'}</p>
+                                    </div>
+                                    ${data.bankAccounts[0].accountNumber || data.bankAccounts[0].account_number ? `
+                                    <div>
+                                        <p style="margin: 5px 0; color: #666;"><strong>Account Number:</strong></p>
+                                        <p style="margin: 5px 0; color: #333; font-family: monospace;">${data.bankAccounts[0].accountNumber || data.bankAccounts[0].account_number}</p>
+                                    </div>
+                                    ` : ''}
+                                    ${data.bankAccounts[0].sortCode || data.bankAccounts[0].sort_code ? `
+                                    <div>
+                                        <p style="margin: 5px 0; color: #666;"><strong>Sort Code:</strong></p>
+                                        <p style="margin: 5px 0; color: #333; font-family: monospace;">${data.bankAccounts[0].sortCode || data.bankAccounts[0].sort_code}</p>
+                                    </div>
+                                    ` : ''}
+                                ` : '<p style="color: #999;">No bank account information available</p>'}
+                                <div style="grid-column: 1 / -1; margin-top: 10px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                                    <p style="margin: 5px 0; color: #666;"><strong>Payment Reference:</strong></p>
+                                    <p style="margin: 5px 0; color: #2563eb; font-size: 16px; font-weight: bold; font-family: monospace;">${invoice.invoiceNumber}</p>
+                                    <p style="margin: 10px 0 0 0; color: #999; font-size: 11px;">Please include this reference number with your payment</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>Thank you for your business!</p>
+                            <p>${data.company.name} | ${data.company.regNumber || ''} | ${data.company.taxNumber || ''}</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                
+                printWindow.document.close();
+            };
+
             const emailInvoice = (invoice) => {
                 const customer = data.customers.find(c => c.id == invoice.customerId);
                 if (!customer || !customer.email) {
@@ -3126,6 +3308,9 @@
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <div className="flex gap-2">
+                                                                <button onClick={() => viewInvoice(invoice)} className="text-indigo-600 hover:text-indigo-800" title="View Invoice">
+                                                                    <Icon name="Eye" className="w-4 h-4" />
+                                                                </button>
                                                                 <button onClick={() => exportInvoicePDF(invoice)} className="text-purple-600 hover:text-purple-800" title="Export to PDF">
                                                                     <Icon name="Download" className="w-4 h-4" />
                                                                 </button>
