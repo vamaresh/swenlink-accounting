@@ -2382,12 +2382,7 @@
                                                         {dueField ? renderFieldBlock(dueField, 'invoice-due') : null}
                                                     </div>
                                                 );
-                                                return;
-                                            }
-
-                                            if (field.name === 'description') {
-                                                blocks.push(renderFieldBlock(field));
-                                                // Add Line Items Table after description
+                                                // Add Line Items Table after date fields
                                                 blocks.push(
                                                     <div key="line-items-section" className="space-y-3">
                                                         <div className="flex justify-between items-center">
@@ -2478,6 +2473,11 @@
                                                         )}
                                                     </div>
                                                 );
+                                                return;
+                                            }
+
+                                            if (field.name === 'description') {
+                                                blocks.push(renderFieldBlock(field));
                                                 return;
                                             }
 
