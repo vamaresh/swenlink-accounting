@@ -391,6 +391,7 @@
                 ],
                 vatReturns: []
             });
+            const [lineItems, setLineItems] = useState([]);
 
             useEffect(() => {
                 const initClerk = async () => {
@@ -960,6 +961,27 @@
                 setEditingId(item?.id || null);
                 const defaultData = item ? { ...item } : {};
                 if (type === 'invoice') {
+                    // Initialize line items
+                    if (item?.lineItems && Array.isArray(item.lineItems) && item.lineItems.length > 0) {
+                        setLineItems(item.lineItems.map((li, idx) => ({
+                            id: Date.now() + idx,
+                            description: li.description || '',
+                            quantity: li.quantity || 1,
+                            unitPrice: li.unitPrice || 0,
+                            amount: li.amount || 0
+                        })));
+                    } else if (item?.line_items && Array.isArray(item.line_items) && item.line_items.length > 0) {
+                        // Handle snake_case from database
+                        setLineItems(item.line_items.map((li, idx) => ({
+                            id: Date.now() + idx,
+                            description: li.description || '',
+                            quantity: li.quantity || 1,
+                            unitPrice: li.unit_price || li.unitPrice || 0,
+                            amount: li.amount || 0
+                        })));
+                    } else {
+                        setLineItems([]);
+                    }
                     const subtotalVal = parseCurrencyValue(defaultData.subtotal);
                     const vatRateVal = defaultData.vatRate !== undefined ? parseCurrencyValue(defaultData.vatRate, 0.20) : 0.20;
                     const vatVal = defaultData.vat !== undefined ? parseCurrencyValue(defaultData.vat) : subtotalVal * vatRateVal;
@@ -998,6 +1020,7 @@
                 setModalType('');
                 setFormData({});
                 setEditingId(null);
+                setLineItems([]);
             };
 
             const handleSubmit = async (e) => {
@@ -1040,13 +1063,21 @@
                             const iVAT = parseFloat(formData.vat || (iSub * iRate));
                             const iDiscount = Math.max(parseFloat(formData.discount || 0), 0);
                             const invoiceTotal = Math.max(iSub + iVAT - iDiscount, 0);
+                            // Prepare line items for storage
+                            const lineItemsData = lineItems.map(item => ({
+                                description: item.description,
+                                quantity: parseFloat(item.quantity) || 0,
+                                unitPrice: parseFloat(item.unitPrice) || 0,
+                                amount: parseFloat(item.amount) || 0
+                            }));
                             if (editingId) {
                                 await supabaseClient.from('invoices').update({
                                     customer_id: formData.customerId, invoice_number: formData.invoiceNumber,
                                     date: formData.date, due_date: formData.dueDate,
                                     description: formData.description, subtotal: iSub,
                                     vat_rate: iRate, vat: iVAT, total: invoiceTotal,
-                                    status: formData.status || 'unpaid'
+                                    status: formData.status || 'unpaid',
+                                    line_items: lineItemsData.length > 0 ? lineItemsData : null
                                 }).eq('id', editingId);
                             } else {
                                 await supabaseClient.from('invoices').insert({
@@ -1055,7 +1086,8 @@
                                     date: formData.date || new Date().toISOString().split('T')[0],
                                     due_date: formData.dueDate, description: formData.description,
                                     subtotal: iSub, vat_rate: iRate, vat: iVAT,
-                                    total: invoiceTotal, status: formData.status || 'unpaid'
+                                    total: invoiceTotal, status: formData.status || 'unpaid',
+                                    line_items: lineItemsData.length > 0 ? lineItemsData : null
                                 });
                             }
                             break;
@@ -1297,6 +1329,31 @@
                 const discountValue = calculateInvoiceDiscount(invoice);
                 const hasDiscount = discountValue >= 0.005;
                 
+                // Check if invoice has line items
+                const lineItemsArray = invoice.lineItems || invoice.line_items || [];
+                const hasLineItems = Array.isArray(lineItemsArray) && lineItemsArray.length > 0;
+                
+                // Generate line items table rows
+                let tableRows = '';
+                if (hasLineItems) {
+                    tableRows = lineItemsArray.map(item => `
+                        <tr>
+                            <td>${item.description || ''}</td>
+                            <td style="text-align: center;">${item.quantity || 1}</td>
+                            <td style="text-align: right;">£${(parseFloat(item.unitPrice || item.unit_price || 0)).toFixed(2)}</td>
+                            <td style="text-align: right;">£${(parseFloat(item.amount || 0)).toFixed(2)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    // Fallback to single description line
+                    tableRows = `
+                        <tr>
+                            <td colspan="3">${invoice.description || 'Services Rendered'}</td>
+                            <td style="text-align: right;">£${invoice.subtotal.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+                
                 printWindow.document.write(`
                     <!DOCTYPE html>
                     <html>
@@ -1358,14 +1415,13 @@
                             <thead>
                                 <tr>
                                     <th>Description</th>
-                                    <th style="text-align: right;">Amount</th>
+                                    ${hasLineItems ? '<th style="text-align: center; width: 80px;">Qty</th>' : ''}
+                                    ${hasLineItems ? '<th style="text-align: right; width: 120px;">Unit Price</th>' : ''}
+                                    <th style="text-align: right; width: 120px;">Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>${invoice.description || 'Services Rendered'}</td>
-                                    <td style="text-align: right;">£${invoice.subtotal.toFixed(2)}</td>
-                                </tr>
+                                ${tableRows}
                             </tbody>
                         </table>
                         
@@ -1597,6 +1653,45 @@
                     };
                 });
             };
+
+            // Line Items Management
+            const addLineItem = () => {
+                setLineItems(prev => [...prev, { 
+                    id: Date.now(), 
+                    description: '', 
+                    quantity: 1, 
+                    unitPrice: 0, 
+                    amount: 0 
+                }]);
+            };
+
+            const updateLineItem = (id, field, value) => {
+                setLineItems(prev => prev.map(item => {
+                    if (item.id !== id) return item;
+                    const updated = { ...item, [field]: value };
+                    if (field === 'quantity' || field === 'unitPrice') {
+                        const qty = parseFloat(field === 'quantity' ? value : updated.quantity) || 0;
+                        const price = parseFloat(field === 'unitPrice' ? value : updated.unitPrice) || 0;
+                        updated.amount = (qty * price).toFixed(2);
+                    }
+                    return updated;
+                }));
+            };
+
+            const removeLineItem = (id) => {
+                setLineItems(prev => prev.filter(item => item.id !== id));
+            };
+
+            const recalculateInvoiceFromLineItems = () => {
+                const subtotal = lineItems.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+                updateInvoiceAmounts({ subtotal: subtotal.toFixed(2) });
+            };
+
+            useEffect(() => {
+                if (modalType === 'invoice' && lineItems.length > 0) {
+                    recalculateInvoiceFromLineItems();
+                }
+            }, [lineItems]);
 
             // Handle sign-in using Clerk's redirect flow
             const handleSignIn = () => {
@@ -2076,6 +2171,92 @@
                                                     <div key="invoice-date-row" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         {renderFieldBlock(field, 'invoice-date')}
                                                         {dueField ? renderFieldBlock(dueField, 'invoice-due') : null}
+                                                    </div>
+                                                );
+                                                return;
+                                            }
+
+                                            if (field.name === 'description') {
+                                                blocks.push(renderFieldBlock(field));
+                                                // Add Line Items Table after description
+                                                blocks.push(
+                                                    <div key="line-items-section" className="space-y-3">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="block text-sm font-medium text-gray-700">Line Items</label>
+                                                            <a 
+                                                                href="#" 
+                                                                onClick={(e) => { e.preventDefault(); addLineItem(); }}
+                                                                className="text-sm text-blue-600 hover:text-blue-800 underline"
+                                                            >
+                                                                + Add line item
+                                                            </a>
+                                                        </div>
+                                                        {lineItems.length > 0 && (
+                                                            <div className="border rounded-lg overflow-hidden">
+                                                                <table className="w-full text-sm">
+                                                                    <thead className="bg-gray-50">
+                                                                        <tr>
+                                                                            <th className="px-3 py-2 text-left text-gray-700">Description</th>
+                                                                            <th className="px-3 py-2 text-center text-gray-700 w-20">Qty</th>
+                                                                            <th className="px-3 py-2 text-right text-gray-700 w-24">Unit Price</th>
+                                                                            <th className="px-3 py-2 text-right text-gray-700 w-24">Amount</th>
+                                                                            <th className="px-3 py-2 w-10"></th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="divide-y">
+                                                                        {lineItems.map((item) => (
+                                                                            <tr key={item.id}>
+                                                                                <td className="px-3 py-2">
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={item.description}
+                                                                                        onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                                                                                        className="w-full px-2 py-1 border rounded text-sm"
+                                                                                        placeholder="Item description"
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="px-3 py-2">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={item.quantity}
+                                                                                        onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
+                                                                                        className="w-full px-2 py-1 border rounded text-sm text-center"
+                                                                                        step="0.01"
+                                                                                        min="0"
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="px-3 py-2">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={item.unitPrice}
+                                                                                        onChange={(e) => updateLineItem(item.id, 'unitPrice', e.target.value)}
+                                                                                        className="w-full px-2 py-1 border rounded text-sm text-right"
+                                                                                        step="0.01"
+                                                                                        min="0"
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="px-3 py-2 text-right text-gray-700">
+                                                                                    £{parseFloat(item.amount || 0).toFixed(2)}
+                                                                                </td>
+                                                                                <td className="px-3 py-2 text-center">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => removeLineItem(item.id)}
+                                                                                        className="text-red-500 hover:text-red-700"
+                                                                                        title="Remove item"
+                                                                                    >
+                                                                                        ×
+                                                                                    </button>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        )}
+                                                        {lineItems.length === 0 && (
+                                                            <p className="text-sm text-gray-500 italic">No line items added. Click "+ Add line item" to add items or use the fields below for a simple invoice.</p>
+                                                        )}
                                                     </div>
                                                 );
                                                 return;
