@@ -982,7 +982,15 @@
                             includeVAT: li.include_vat !== undefined ? li.include_vat : (li.includeVAT !== undefined ? li.includeVAT : true)
                         })));
                     } else {
-                        setLineItems([]);
+                        // Start with one default line item for new invoices
+                        setLineItems([{
+                            id: Date.now(),
+                            description: '',
+                            quantity: 1,
+                            unitPrice: 0,
+                            amount: 0,
+                            includeVAT: true
+                        }]);
                     }
                     const subtotalVal = parseCurrencyValue(defaultData.subtotal);
                     const vatRateVal = defaultData.vatRate !== undefined ? parseCurrencyValue(defaultData.vatRate, 0.20) : 0.20;
