@@ -6,13 +6,14 @@ ALTER TABLE invoices
 ADD COLUMN IF NOT EXISTS line_items JSONB DEFAULT '[]'::jsonb;
 
 -- Add comment explaining the structure
-COMMENT ON COLUMN invoices.line_items IS 'Array of line items: [{description, quantity, unitPrice, amount}]';
+COMMENT ON COLUMN invoices.line_items IS 'Array of line items: [{description, quantity, unitPrice, amount, includeVAT}]';
 
 -- Optional: Create an index for better query performance on line_items
 CREATE INDEX IF NOT EXISTS idx_invoices_line_items ON invoices USING gin(line_items);
 
 -- Example line_items structure:
 -- [
---   {"description": "Web Design", "quantity": 1, "unitPrice": 500.00, "amount": 500.00},
---   {"description": "Logo Design", "quantity": 1, "unitPrice": 150.00, "amount": 150.00}
+--   {"description": "Web Design", "quantity": 1, "unitPrice": 500.00, "amount": 500.00, "includeVAT": true},
+--   {"description": "Logo Design", "quantity": 1, "unitPrice": 150.00, "amount": 150.00, "includeVAT": true},
+--   {"description": "Hosting (VAT exempt)", "quantity": 12, "unitPrice": 10.00, "amount": 120.00, "includeVAT": false}
 -- ]

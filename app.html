@@ -968,7 +968,8 @@
                             description: li.description || '',
                             quantity: li.quantity || 1,
                             unitPrice: li.unitPrice || 0,
-                            amount: li.amount || 0
+                            amount: li.amount || 0,
+                            includeVAT: li.includeVAT !== undefined ? li.includeVAT : true
                         })));
                     } else if (item?.line_items && Array.isArray(item.line_items) && item.line_items.length > 0) {
                         // Handle snake_case from database
@@ -977,7 +978,8 @@
                             description: li.description || '',
                             quantity: li.quantity || 1,
                             unitPrice: li.unit_price || li.unitPrice || 0,
-                            amount: li.amount || 0
+                            amount: li.amount || 0,
+                            includeVAT: li.include_vat !== undefined ? li.include_vat : (li.includeVAT !== undefined ? li.includeVAT : true)
                         })));
                     } else {
                         setLineItems([]);
@@ -1068,7 +1070,8 @@
                                 description: item.description,
                                 quantity: parseFloat(item.quantity) || 0,
                                 unitPrice: parseFloat(item.unitPrice) || 0,
-                                amount: parseFloat(item.amount) || 0
+                                amount: parseFloat(item.amount) || 0,
+                                includeVAT: item.includeVAT !== false  // Default to true
                             }));
                             if (editingId) {
                                 await supabaseClient.from('invoices').update({
@@ -1336,19 +1339,23 @@
                 // Generate line items table rows
                 let tableRows = '';
                 if (hasLineItems) {
-                    tableRows = lineItemsArray.map(item => `
+                    tableRows = lineItemsArray.map(item => {
+                        const includeVAT = item.includeVAT !== undefined ? item.includeVAT : (item.include_vat !== undefined ? item.include_vat : true);
+                        return `
                         <tr>
                             <td>${item.description || ''}</td>
                             <td style="text-align: center;">${item.quantity || 1}</td>
                             <td style="text-align: right;">£${(parseFloat(item.unitPrice || item.unit_price || 0)).toFixed(2)}</td>
                             <td style="text-align: right;">£${(parseFloat(item.amount || 0)).toFixed(2)}</td>
+                            <td style="text-align: center;">${includeVAT ? '✓' : '—'}</td>
                         </tr>
-                    `).join('');
+                    `;
+                    }).join('');
                 } else {
                     // Fallback to single description line
                     tableRows = `
                         <tr>
-                            <td colspan="3">${invoice.description || 'Services Rendered'}</td>
+                            <td colspan="4">${invoice.description || 'Services Rendered'}</td>
                             <td style="text-align: right;">£${invoice.subtotal.toFixed(2)}</td>
                         </tr>
                     `;
@@ -1418,6 +1425,7 @@
                                     ${hasLineItems ? '<th style="text-align: center; width: 80px;">Qty</th>' : ''}
                                     ${hasLineItems ? '<th style="text-align: right; width: 120px;">Unit Price</th>' : ''}
                                     <th style="text-align: right; width: 120px;">Amount</th>
+                                    ${hasLineItems ? '<th style="text-align: center; width: 60px;">+VAT</th>' : ''}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1661,7 +1669,8 @@
                     description: '', 
                     quantity: 1, 
                     unitPrice: 0, 
-                    amount: 0 
+                    amount: 0,
+                    includeVAT: true  // Default to include VAT
                 }]);
             };
 
@@ -1683,15 +1692,39 @@
             };
 
             const recalculateInvoiceFromLineItems = () => {
-                const subtotal = lineItems.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
-                updateInvoiceAmounts({ subtotal: subtotal.toFixed(2) });
+                // Calculate subtotal (VATable items only)
+                const vatableSubtotal = lineItems
+                    .filter(item => item.includeVAT)
+                    .reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+                
+                // Calculate non-VATable items
+                const nonVatableTotal = lineItems
+                    .filter(item => !item.includeVAT)
+                    .reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+                
+                // Get VAT rate and discount
+                const vatRate = parseFloat(formData.vatRate || 0.20);
+                const discount = parseFloat(formData.discount || 0);
+                
+                // Calculate VAT only on VATable items
+                const vatAmount = vatableSubtotal * vatRate;
+                
+                // Total = VATable subtotal + VAT + Non-VATable items - discount
+                const total = vatableSubtotal + vatAmount + nonVatableTotal - discount;
+                
+                setFormData(prev => ({
+                    ...prev,
+                    subtotal: vatableSubtotal.toFixed(2),
+                    vat: vatAmount.toFixed(2),
+                    total: Math.max(total, 0).toFixed(2)
+                }));
             };
 
             useEffect(() => {
                 if (modalType === 'invoice' && lineItems.length > 0) {
                     recalculateInvoiceFromLineItems();
                 }
-            }, [lineItems]);
+            }, [lineItems, formData.vatRate, formData.discount]);
 
             // Handle sign-in using Clerk's redirect flow
             const handleSignIn = () => {
@@ -2200,6 +2233,7 @@
                                                                             <th className="px-3 py-2 text-center text-gray-700 w-20">Qty</th>
                                                                             <th className="px-3 py-2 text-right text-gray-700 w-24">Unit Price</th>
                                                                             <th className="px-3 py-2 text-right text-gray-700 w-24">Amount</th>
+                                                                            <th className="px-3 py-2 text-center text-gray-700 w-16">+VAT</th>
                                                                             <th className="px-3 py-2 w-10"></th>
                                                                         </tr>
                                                                     </thead>
@@ -2239,10 +2273,19 @@
                                                                                     £{parseFloat(item.amount || 0).toFixed(2)}
                                                                                 </td>
                                                                                 <td className="px-3 py-2 text-center">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={item.includeVAT !== false}
+                                                                                        onChange={(e) => updateLineItem(item.id, 'includeVAT', e.target.checked)}
+                                                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                                                        title="Include VAT on this item"
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="px-3 py-2 text-center">
                                                                                     <button
                                                                                         type="button"
                                                                                         onClick={() => removeLineItem(item.id)}
-                                                                                        className="text-red-500 hover:text-red-700"
+                                                                                        className="text-red-500 hover:text-red-700 text-lg font-bold"
                                                                                         title="Remove item"
                                                                                     >
                                                                                         ×
