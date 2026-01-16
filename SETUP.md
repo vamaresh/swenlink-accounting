@@ -13,6 +13,15 @@
 5. Paste into the SQL editor
 6. Click **Run** to create all tables and policies
 
+## Step 1b: Scheduled Maintenance (Daily Metrics Rollup)
+
+This creates a small daily rollup table and a scheduled job that keeps 180 days of metrics.
+
+1. In Supabase **SQL Editor**, click **New Query**
+2. Copy the entire contents of `supabase-maintenance.sql`
+3. Paste into the SQL editor
+4. Click **Run** to create the function, table, and cron schedule
+
 ## Step 2: Supabase Storage Setup (for images)
 
 1. In Supabase dashboard, go to **Storage**

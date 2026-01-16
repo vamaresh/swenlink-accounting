@@ -124,10 +124,16 @@
 11. `chart_of_accounts` - 7 default + user custom accounts
 12. `vat_returns` - Generated returns
 13. `user_subscriptions` - Subscription tiers (admin for amareshvel@gmail.com)
+14. `app_daily_metrics` - Daily rollup row for the current date
 
 ### Storage Bucket
 - `bill-images` - Should contain uploaded bill/expense images
 - Check public access is enabled
+
+### Maintenance Jobs
+- [ ] Run `SELECT public.refresh_daily_metrics();` in SQL Editor
+- [ ] Check `app_daily_metrics` has a row for today
+- [ ] Check `cron.job` contains `daily_app_metrics_rollup`
 
 ## ✅ Success Criteria
 - All CRUD operations work without errors
