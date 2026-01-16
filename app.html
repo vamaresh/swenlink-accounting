@@ -1348,14 +1348,12 @@
                 let tableRows = '';
                 if (hasLineItems) {
                     tableRows = lineItemsArray.map(item => {
-                        const includeVAT = item.includeVAT !== undefined ? item.includeVAT : (item.include_vat !== undefined ? item.include_vat : true);
                         return `
                         <tr>
                             <td>${item.description || ''}</td>
                             <td style="text-align: center;">${item.quantity || 1}</td>
                             <td style="text-align: right;">£${(parseFloat(item.unitPrice || item.unit_price || 0)).toFixed(2)}</td>
                             <td style="text-align: right;">£${(parseFloat(item.amount || 0)).toFixed(2)}</td>
-                            <td style="text-align: center;">${includeVAT ? '✓' : '—'}</td>
                         </tr>
                     `;
                     }).join('');
@@ -1363,7 +1361,7 @@
                     // Fallback to single description line
                     tableRows = `
                         <tr>
-                            <td colspan="4">${invoice.description || 'Services Rendered'}</td>
+                            <td colspan="3">${invoice.description || 'Services Rendered'}</td>
                             <td style="text-align: right;">£${invoice.subtotal.toFixed(2)}</td>
                         </tr>
                     `;
@@ -1433,7 +1431,6 @@
                                     ${hasLineItems ? '<th style="text-align: center; width: 80px;">Qty</th>' : ''}
                                     ${hasLineItems ? '<th style="text-align: right; width: 120px;">Unit Price</th>' : ''}
                                     <th style="text-align: right; width: 120px;">Amount</th>
-                                    ${hasLineItems ? '<th style="text-align: center; width: 60px;">+VAT</th>' : ''}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1525,14 +1522,12 @@
                 let tableRows = '';
                 if (hasLineItems) {
                     tableRows = lineItemsArray.map(item => {
-                        const includeVAT = item.includeVAT !== undefined ? item.includeVAT : (item.include_vat !== undefined ? item.include_vat : true);
                         return `
                         <tr>
                             <td>${item.description || ''}</td>
                             <td style="text-align: center;">${item.quantity || 1}</td>
                             <td style="text-align: right;">£${(parseFloat(item.unitPrice || item.unit_price || 0)).toFixed(2)}</td>
                             <td style="text-align: right;">£${(parseFloat(item.amount || 0)).toFixed(2)}</td>
-                            <td style="text-align: center;">${includeVAT ? '✓' : '—'}</td>
                         </tr>
                     `;
                     }).join('');
@@ -1540,7 +1535,7 @@
                     // Fallback to single description line
                     tableRows = `
                         <tr>
-                            <td colspan="4">${invoice.description || 'Services Rendered'}</td>
+                            <td colspan="3">${invoice.description || 'Services Rendered'}</td>
                             <td style="text-align: right;">£${invoice.subtotal.toFixed(2)}</td>
                         </tr>
                     `;
@@ -1618,7 +1613,6 @@
                                     ${hasLineItems ? '<th style="text-align: center; width: 80px;">Qty</th>' : ''}
                                     ${hasLineItems ? '<th style="text-align: right; width: 120px;">Unit Price</th>' : ''}
                                     <th style="text-align: right; width: 120px;">Amount</th>
-                                    ${hasLineItems ? '<th style="text-align: center; width: 60px;">+VAT</th>' : ''}
                                 </tr>
                             </thead>
                             <tbody>
