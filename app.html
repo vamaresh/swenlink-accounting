@@ -419,49 +419,7 @@
                                 setIsLoading(false);
                             }
             
-                                async function loadDirectors(companyId) {
-                                    if (!companyId) return
-                                    try {
-                                        const { data: dirs, error } = await supabase.from('directors').select('*').eq('company_id', companyId).limit(200)
-                                        if (error) throw error
-                                        setDirectorsList(dirs || [])
-                                    } catch (err) {
-                                        console.warn('Could not load directors', err)
-                                        setDirectorsList([])
-                                    }
-                                }
-            
-                                async function fetchCompanyRegistrationDate() {
-                                    if (!data.company || !data.company.regNumber) return
-                                    try {
-                                        const resp = await fetch(`/api/companies-house?reg=${encodeURIComponent(data.company.regNumber)}`)
-                                        if (!resp.ok) throw new Error('fetch failed')
-                                        const j = await resp.json()
-                                        if (j && j.registered_office_address) {
-                                            // Companies House returns 'date_of_creation' as string YYYY-MM-DD
-                                            const dateStr = j.date_of_creation || j.date_registered || j.registered_on
-                                            if (dateStr) {
-                                                setCompanyRegDate(dateStr)
-                                                // calculate some common UK key dates
-                                                const reg = new Date(dateStr)
-                                                const nextConf = new Date(reg)
-                                                nextConf.setFullYear(nextConf.getFullYear() + 1)
-                                                setConfirmationDue(nextConf.toISOString())
-                                                // Accounts due: 9 months and 1 week after accounting reference end (approx)
-                                                // If we have financialYearStart from company data, use that, otherwise use reg date +1yr
-                                                const fyStart = data.company.financialYearStart ? new Date(data.company.financialYearStart) : new Date(reg)
-                                                const accountsEnd = new Date(fyStart)
-                                                accountsEnd.setFullYear(accountsEnd.getFullYear() + 1)
-                                                const due = new Date(accountsEnd)
-                                                due.setMonth(due.getMonth() + 9)
-                                                due.setDate(due.getDate() + 7)
-                                                setNextAccountsDue(due.toISOString())
-                                            }
-                                        }
-                                    } catch (err) {
-                                        console.warn('Companies House fetch failed', err)
-                                    }
-                                }
+                                
                         } catch (error) {
                             console.error('Clerk error:', error);
                             setIsLoading(false);
@@ -518,6 +476,50 @@
                     setS455Alerts([])
                 } finally {
                     setS455Loading(false)
+                }
+            }
+
+            // Component-scope helper to load directors for the dropdown
+            async function loadDirectors(companyId) {
+                if (!companyId) return
+                try {
+                    await ensureSupabaseToken()
+                    const { data: dirs, error } = await supabaseClient.from('directors').select('*').eq('company_id', companyId).limit(200)
+                    if (error) throw error
+                    setDirectorsList(dirs || [])
+                } catch (err) {
+                    console.warn('Could not load directors', err)
+                    setDirectorsList([])
+                }
+            }
+
+            // Component-scope helper to fetch Companies House registration date and calculate key dates
+            async function fetchCompanyRegistrationDate() {
+                if (!data.company || !data.company.regNumber) return
+                try {
+                    const resp = await fetch(`/api/companies-house?reg=${encodeURIComponent(data.company.regNumber)}`)
+                    if (!resp.ok) throw new Error('fetch failed')
+                    const j = await resp.json()
+                    // companies house responses vary; look for common date fields
+                    const dateStr = j && (j.date_of_creation || j.date_registered || j.registered_on || j.creation_date)
+                    if (dateStr) {
+                        setCompanyRegDate(dateStr)
+                        const reg = new Date(dateStr)
+                        const nextConf = new Date(reg)
+                        nextConf.setFullYear(nextConf.getFullYear() + 1)
+                        setConfirmationDue(nextConf.toISOString())
+
+                        const fyStart = data.company.financialYearStart ? new Date(data.company.financialYearStart) : new Date(reg)
+                        const accountsEnd = new Date(fyStart)
+                        accountsEnd.setFullYear(accountsEnd.getFullYear() + 1)
+                        const due = new Date(accountsEnd)
+                        due.setMonth(due.getMonth() + 9)
+                        due.setDate(due.getDate() + 7)
+                        setNextAccountsDue(due.toISOString())
+                    }
+                } catch (err) {
+                    console.warn('Companies House fetch failed', err)
+                    throw err
                 }
             }
 
@@ -2917,12 +2919,26 @@
                                         <button onClick={loadS455Alerts} className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Refresh</button>
                                     </div>
                                 </div>
-                                <div className="mt-4">
-                                    {s455Loading ? (
-                                        <div className="text-sm text-gray-500">Loading alerts…</div>
-                                    ) : (
-                                        <div className="overflow-x-auto bg-white rounded-lg p-3 surface-card">
-                                            <table className="w-full text-sm">
+
+                                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div className="bg-white rounded-lg p-3 surface-card">
+                                        <h4 className="text-sm font-semibold">Key Dates</h4>
+                                        <div className="text-xs text-gray-600 mt-2">
+                                            <div><span className="font-medium">Registered:</span> {companyRegDate ? new Date(companyRegDate).toLocaleDateString() : (data.company?.regNumber ? 'Unknown' : '—')}</div>
+                                            <div><span className="font-medium">Next Accounts Due:</span> {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString() : '—'}</div>
+                                            <div><span className="font-medium">Confirmation Due:</span> {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}</div>
+                                        </div>
+                                        <div className="mt-2">
+                                            <button className="text-blue-500 text-xs" onClick={async () => { try { await fetchCompanyRegistrationDate(); } catch(e){ alert('Fetch failed') } }}>Fetch registration date</button>
+                                        </div>
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        {s455Loading ? (
+                                            <div className="text-sm text-gray-500">Loading alerts…</div>
+                                        ) : (
+                                            <div className="overflow-x-auto bg-white rounded-lg p-3 surface-card">
+                                                <table className="w-full text-sm">
                                                 <thead>
                                                     <tr className="text-left text-gray-600">
                                                         <th className="py-2">Director</th>
@@ -2946,7 +2962,8 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
