@@ -392,6 +392,11 @@
                 vatReturns: []
             });
             const [lineItems, setLineItems] = useState([]);
+            // DLA states
+            const [dlaMovements, setDlaMovements] = useState([]);
+            const [dlaLoading, setDlaLoading] = useState(false);
+            const [showDlaModal, setShowDlaModal] = useState(false);
+            const [dlaForm, setDlaForm] = useState({ director_id: '', amount: 0.00, movement_type: 'borrow', notes: '' });
 
             useEffect(() => {
                 const initClerk = async () => {
@@ -417,6 +422,59 @@
 
                 initClerk();
             }, []);
+
+            // Load DLA movements for the company
+            const loadDlaMovements = async () => {
+                try {
+                    setDlaLoading(true);
+                    await ensureSupabaseToken();
+                    const companyId = data.company?.id || null;
+                    const { data: rows, error } = await supabaseClient
+                        .from('dla_movements')
+                        .select('*')
+                        .eq('company_id', companyId)
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    setDlaMovements(rows || []);
+                } catch (err) {
+                    console.error('Failed to load DLA movements', err);
+                } finally {
+                    setDlaLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                // load DLA movements when company is set or when DLA tab becomes active
+                if (data.company?.id && activeTab === 'dla') {
+                    loadDlaMovements();
+                }
+            }, [data.company?.id, activeTab]);
+
+            const openDlaModal = () => {
+                setDlaForm({ director_id: '', amount: 0.00, movement_type: 'borrow', notes: '' });
+                setShowDlaModal(true);
+            };
+
+            const submitDlaForm = async (e) => {
+                e.preventDefault();
+                try {
+                    await ensureSupabaseToken();
+                    const payload = {
+                        p_company_id: data.company?.id || null,
+                        p_director_id: dlaForm.director_id,
+                        p_amount: parseFloat(dlaForm.amount) || 0,
+                        p_movement_type: dlaForm.movement_type,
+                        p_created_by: user?.primaryEmailAddress?.emailAddress || user?.email || 'system'
+                    };
+                    const { data: rpcRes, error } = await supabaseClient.rpc('app.insert_dla_movement', payload);
+                    if (error) throw error;
+                    setShowDlaModal(false);
+                    await loadDlaMovements();
+                } catch (err) {
+                    console.error('Failed to create DLA movement', err);
+                    alert('Failed to create DLA movement: ' + (err.message || err.toString()));
+                }
+            };
 
             useEffect(() => {
                 try {
@@ -627,6 +685,7 @@
                         setData(prev => ({
                             ...prev,
                             company: {
+                                id: company.id,
                                 name: company.name,
                                 regNumber: company.reg_number,
                                 taxNumber: company.tax_number,
@@ -2594,6 +2653,7 @@
                 {id: 'customers', icon: 'Users', label: 'Customers'},
                 {id: 'suppliers', icon: 'Users', label: 'Suppliers'},
                 {id: 'invoices', icon: 'FileText', label: 'Sales Invoices'},
+                {id: 'dla', icon: 'DollarSign', label: "DLA Movements"},
                 {id: 'bills', icon: 'Receipt', label: 'Purchase Bills'},
                 {id: 'expenses', icon: 'CreditCard', label: 'Expenses'},
                 {id: 'banking', icon: 'PiggyBank', label: 'Banking'},
@@ -2760,6 +2820,85 @@
                             </div>
                         </div>
                             </>
+                        )}
+                        {activeTab === 'dla' && (
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-bold">Director's Loan Account (DLA)</h2>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={openDlaModal} className="bg-blue-600 text-white px-3 py-2 rounded-lg">Add Movement</button>
+                                        <button onClick={loadDlaMovements} className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Refresh</button>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4">
+                                    {dlaLoading ? (
+                                        <div className="text-sm text-gray-500">Loading...</div>
+                                    ) : (
+                                        <div className="overflow-x-auto bg-white rounded-lg p-3 surface-card">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="text-left text-gray-600">
+                                                        <th className="py-2">Director ID</th>
+                                                        <th className="py-2">Amount</th>
+                                                        <th className="py-2">Type</th>
+                                                        <th className="py-2">Notes</th>
+                                                        <th className="py-2">Created At</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {dlaMovements.map(m => (
+                                                        <tr key={m.id} className="border-t">
+                                                            <td className="py-2">{m.director_id}</td>
+                                                            <td className="py-2">£{parseFloat(m.amount).toFixed(2)}</td>
+                                                            <td className="py-2">{m.movement_type}</td>
+                                                            <td className="py-2">{m.notes}</td>
+                                                            <td className="py-2">{new Date(m.created_at).toLocaleString()}</td>
+                                                        </tr>
+                                                    ))}
+                                                    {dlaMovements.length === 0 && (
+                                                        <tr><td colSpan="5" className="py-4 text-center text-gray-500">No DLA movements found.</td></tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {showDlaModal && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-black opacity-40" onClick={() => setShowDlaModal(false)} />
+                                        <div className="bg-white rounded-lg p-6 z-10 w-full max-w-lg">
+                                            <h3 className="text-lg font-semibold mb-3">Add DLA Movement</h3>
+                                            <form onSubmit={submitDlaForm}>
+                                                <label className="block text-sm text-gray-700">Director ID (UUID)</label>
+                                                <input className="w-full p-2 border rounded mb-3" value={dlaForm.director_id} onChange={e => setDlaForm(prev => ({ ...prev, director_id: e.target.value }))} required />
+
+                                                <label className="block text-sm text-gray-700">Amount</label>
+                                                <input type="number" step="0.01" className="w-full p-2 border rounded mb-3" value={dlaForm.amount} onChange={e => setDlaForm(prev => ({ ...prev, amount: e.target.value }))} required />
+
+                                                <label className="block text-sm text-gray-700">Type</label>
+                                                <select className="w-full p-2 border rounded mb-3" value={dlaForm.movement_type} onChange={e => setDlaForm(prev => ({ ...prev, movement_type: e.target.value }))}>
+                                                    <option value="borrow">Borrow</option>
+                                                    <option value="repayment">Repayment</option>
+                                                    <option value="salary">Salary</option>
+                                                    <option value="dividend">Dividend</option>
+                                                    <option value="reimbursable">Reimbursable</option>
+                                                    <option value="expense">Expense</option>
+                                                </select>
+
+                                                <label className="block text-sm text-gray-700">Notes</label>
+                                                <textarea className="w-full p-2 border rounded mb-3" value={dlaForm.notes} onChange={e => setDlaForm(prev => ({ ...prev, notes: e.target.value }))} />
+
+                                                <div className="flex gap-3 justify-end">
+                                                    <button type="button" onClick={() => setShowDlaModal(false)} className="px-4 py-2 rounded bg-gray-200">Cancel</button>
+                                                    <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white">Create</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {activeTab === 'reports' && (

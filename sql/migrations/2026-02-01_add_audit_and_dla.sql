@@ -64,19 +64,29 @@ $$ LANGUAGE plpgsql;
 DO $$
 BEGIN
   IF EXISTS(SELECT 1 FROM pg_class WHERE relname = 'invoices') THEN
-    EXECUTE 'CREATE TRIGGER audit_invoices AFTER INSERT OR UPDATE OR DELETE ON invoices FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'audit_invoices' AND tgrelid = 'invoices'::regclass) THEN
+      EXECUTE 'CREATE TRIGGER audit_invoices AFTER INSERT OR UPDATE OR DELETE ON invoices FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    END IF;
   END IF;
   IF EXISTS(SELECT 1 FROM pg_class WHERE relname = 'bills') THEN
-    EXECUTE 'CREATE TRIGGER audit_bills AFTER INSERT OR UPDATE OR DELETE ON bills FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'audit_bills' AND tgrelid = 'bills'::regclass) THEN
+      EXECUTE 'CREATE TRIGGER audit_bills AFTER INSERT OR UPDATE OR DELETE ON bills FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    END IF;
   END IF;
   IF EXISTS(SELECT 1 FROM pg_class WHERE relname = 'bank_transactions') THEN
-    EXECUTE 'CREATE TRIGGER audit_bank_transactions AFTER INSERT OR UPDATE OR DELETE ON bank_transactions FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'audit_bank_transactions' AND tgrelid = 'bank_transactions'::regclass) THEN
+      EXECUTE 'CREATE TRIGGER audit_bank_transactions AFTER INSERT OR UPDATE OR DELETE ON bank_transactions FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    END IF;
   END IF;
   IF EXISTS(SELECT 1 FROM pg_class WHERE relname = 'transactions') THEN
-    EXECUTE 'CREATE TRIGGER audit_transactions AFTER INSERT OR UPDATE OR DELETE ON transactions FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'audit_transactions' AND tgrelid = 'transactions'::regclass) THEN
+      EXECUTE 'CREATE TRIGGER audit_transactions AFTER INSERT OR UPDATE OR DELETE ON transactions FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    END IF;
   END IF;
   IF EXISTS(SELECT 1 FROM pg_class WHERE relname = 'distributions') THEN
-    EXECUTE 'CREATE TRIGGER audit_distributions AFTER INSERT OR UPDATE OR DELETE ON distributions FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'audit_distributions' AND tgrelid = 'distributions'::regclass) THEN
+      EXECUTE 'CREATE TRIGGER audit_distributions AFTER INSERT OR UPDATE OR DELETE ON distributions FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    END IF;
   END IF;
 END$$;
 
@@ -98,7 +108,9 @@ CREATE TABLE IF NOT EXISTS dla_movements (
 DO $$
 BEGIN
   IF EXISTS(SELECT 1 FROM pg_class WHERE relname = 'dla_movements') THEN
-    EXECUTE 'CREATE TRIGGER audit_dla_movements AFTER INSERT OR UPDATE OR DELETE ON dla_movements FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'audit_dla_movements' AND tgrelid = 'dla_movements'::regclass) THEN
+      EXECUTE 'CREATE TRIGGER audit_dla_movements AFTER INSERT OR UPDATE OR DELETE ON dla_movements FOR EACH ROW EXECUTE FUNCTION fn_audit_record();';
+    END IF;
   END IF;
 END$$;
 
@@ -121,7 +133,7 @@ BEGIN
 
     v_new_div := COALESCE(NEW.amount, 0);
     IF v_retained - v_new_div < 0 THEN
-      RAISE EXCEPTION 'Illegal dividend: retained earnings (%%) insufficient for dividend (%%)', v_retained, v_new_div;
+      RAISE EXCEPTION 'Illegal dividend: retained earnings (%) insufficient for dividend (%)', v_retained, v_new_div;
     END IF;
   END IF;
   RETURN NEW;
@@ -132,7 +144,9 @@ $$ LANGUAGE plpgsql;
 DO $$
 BEGIN
   IF EXISTS(SELECT 1 FROM pg_class WHERE relname = 'distributions') THEN
-    EXECUTE 'CREATE TRIGGER trg_prevent_illegal_dividend BEFORE INSERT OR UPDATE ON distributions FOR EACH ROW EXECUTE FUNCTION fn_prevent_illegal_dividend();';
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_prevent_illegal_dividend' AND tgrelid = 'distributions'::regclass) THEN
+      EXECUTE 'CREATE TRIGGER trg_prevent_illegal_dividend BEFORE INSERT OR UPDATE ON distributions FOR EACH ROW EXECUTE FUNCTION fn_prevent_illegal_dividend();';
+    END IF;
   END IF;
 END$$;
 
