@@ -10,6 +10,11 @@ BEGIN
     FROM pg_catalog.pg_class c
     JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
     WHERE c.relname = 'dla_movements' AND n.nspname = 'public'
+  ) AND EXISTS (
+    SELECT 1
+    FROM pg_catalog.pg_class c2
+    JOIN pg_catalog.pg_namespace n2 ON n2.oid = c2.relnamespace
+    WHERE c2.relname = 'directors' AND n2.nspname = 'public'
   ) THEN
     EXECUTE $sql$
     CREATE OR REPLACE VIEW public.view_dla_s455_alerts AS
