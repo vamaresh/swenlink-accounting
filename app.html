@@ -397,6 +397,14 @@
             const [dlaLoading, setDlaLoading] = useState(false);
             const [showDlaModal, setShowDlaModal] = useState(false);
             const [dlaForm, setDlaForm] = useState({ director_id: '', amount: 0.00, movement_type: 'borrow', notes: '' });
+                const [directorsList, setDirectorsList] = React.useState([])
+            
+                // Key dates state
+                const [companyRegDate, setCompanyRegDate] = React.useState(null)
+                const [nextAccountsDue, setNextAccountsDue] = React.useState(null)
+                const [confirmationDue, setConfirmationDue] = React.useState(null)
+                const [s455Alerts, setS455Alerts] = React.useState([])
+                const [s455Loading, setS455Loading] = React.useState(false)
 
             useEffect(() => {
                 const initClerk = async () => {
@@ -410,6 +418,50 @@
                             } else {
                                 setIsLoading(false);
                             }
+            
+                                async function loadDirectors(companyId) {
+                                    if (!companyId) return
+                                    try {
+                                        const { data: dirs, error } = await supabase.from('directors').select('*').eq('company_id', companyId).limit(200)
+                                        if (error) throw error
+                                        setDirectorsList(dirs || [])
+                                    } catch (err) {
+                                        console.warn('Could not load directors', err)
+                                        setDirectorsList([])
+                                    }
+                                }
+            
+                                async function fetchCompanyRegistrationDate() {
+                                    if (!data.company || !data.company.regNumber) return
+                                    try {
+                                        const resp = await fetch(`/api/companies-house?reg=${encodeURIComponent(data.company.regNumber)}`)
+                                        if (!resp.ok) throw new Error('fetch failed')
+                                        const j = await resp.json()
+                                        if (j && j.registered_office_address) {
+                                            // Companies House returns 'date_of_creation' as string YYYY-MM-DD
+                                            const dateStr = j.date_of_creation || j.date_registered || j.registered_on
+                                            if (dateStr) {
+                                                setCompanyRegDate(dateStr)
+                                                // calculate some common UK key dates
+                                                const reg = new Date(dateStr)
+                                                const nextConf = new Date(reg)
+                                                nextConf.setFullYear(nextConf.getFullYear() + 1)
+                                                setConfirmationDue(nextConf.toISOString())
+                                                // Accounts due: 9 months and 1 week after accounting reference end (approx)
+                                                // If we have financialYearStart from company data, use that, otherwise use reg date +1yr
+                                                const fyStart = data.company.financialYearStart ? new Date(data.company.financialYearStart) : new Date(reg)
+                                                const accountsEnd = new Date(fyStart)
+                                                accountsEnd.setFullYear(accountsEnd.getFullYear() + 1)
+                                                const due = new Date(accountsEnd)
+                                                due.setMonth(due.getMonth() + 9)
+                                                due.setDate(due.getDate() + 7)
+                                                setNextAccountsDue(due.toISOString())
+                                            }
+                                        }
+                                    } catch (err) {
+                                        console.warn('Companies House fetch failed', err)
+                                    }
+                                }
                         } catch (error) {
                             console.error('Clerk error:', error);
                             setIsLoading(false);
@@ -448,10 +500,31 @@
                 if (data.company?.id && activeTab === 'dla') {
                     loadDlaMovements();
                 }
+                if (data.company?.id && activeTab === 'alerts') {
+                    loadS455Alerts();
+                }
             }, [data.company?.id, activeTab]);
+
+            async function loadS455Alerts() {
+                if (!data.company?.id) return
+                setS455Loading(true)
+                try {
+                    await ensureSupabaseToken()
+                    const { data: rows, error } = await supabaseClient.from('view_dla_s455_alerts').select('*').eq('company_id', data.company.id).order('total_balance', { ascending: false })
+                    if (error) throw error
+                    setS455Alerts(rows || [])
+                } catch (err) {
+                    console.warn('Failed to load S455 alerts', err)
+                    setS455Alerts([])
+                } finally {
+                    setS455Loading(false)
+                }
+            }
 
             const openDlaModal = () => {
                 setDlaForm({ director_id: '', amount: 0.00, movement_type: 'borrow', notes: '' });
+                // preload directors for the company
+                loadDirectors(data.company?.id)
                 setShowDlaModal(true);
             };
 
@@ -2654,6 +2727,7 @@
                 {id: 'suppliers', icon: 'Users', label: 'Suppliers'},
                 {id: 'invoices', icon: 'FileText', label: 'Sales Invoices'},
                 {id: 'dla', icon: 'DollarSign', label: "DLA Movements"},
+                {id: 'alerts', icon: 'AlertCircle', label: 'Alerts'},
                 {id: 'bills', icon: 'Receipt', label: 'Purchase Bills'},
                 {id: 'expenses', icon: 'CreditCard', label: 'Expenses'},
                 {id: 'banking', icon: 'PiggyBank', label: 'Banking'},
@@ -2706,6 +2780,19 @@
                                     <p className="text-xs text-gray-300"><span className="font-semibold">Reg No:</span> {data.company.regNumber}</p>
                                     {data.company.taxNumber && <p className="text-xs text-gray-300"><span className="font-semibold">Tax No:</span> {data.company.taxNumber}</p>}
                                     {data.company.financialYearStart && <p className="text-xs text-gray-300"><span className="font-semibold">FY Start:</span> {new Date(data.company.financialYearStart).toLocaleDateString()}</p>}
+                                </div>
+                            )}
+                            {!sidebarCollapsed && (
+                                <div className="mt-3 pt-3 border-t border-gray-700">
+                                    <h4 className="text-xs text-gray-300 font-semibold">Key Dates</h4>
+                                    <div className="text-xs text-gray-300 mt-2">
+                                        <div><span className="font-medium">Registered:</span> {companyRegDate ? new Date(companyRegDate).toLocaleDateString() : (data.company.regNumber ? 'Unknown' : '—')}</div>
+                                        <div><span className="font-medium">Next Accounts Due:</span> {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString() : '—'}</div>
+                                        <div><span className="font-medium">Confirmation Statement Due:</span> {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}</div>
+                                    </div>
+                                    <div className="mt-2">
+                                        <button className="text-blue-300 text-xs" onClick={async () => { await fetchCompanyRegistrationDate(); }}>Fetch registration date</button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -2821,6 +2908,48 @@
                         </div>
                             </>
                         )}
+
+                        {activeTab === 'alerts' && (
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-bold">Alerts</h2>
+                                    <div>
+                                        <button onClick={loadS455Alerts} className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Refresh</button>
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    {s455Loading ? (
+                                        <div className="text-sm text-gray-500">Loading alerts…</div>
+                                    ) : (
+                                        <div className="overflow-x-auto bg-white rounded-lg p-3 surface-card">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="text-left text-gray-600">
+                                                        <th className="py-2">Director</th>
+                                                        <th className="py-2">Total Balance</th>
+                                                        <th className="py-2">Oldest Movement</th>
+                                                        <th className="py-2">Days Outstanding</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {s455Alerts.map(a => (
+                                                        <tr key={a.director_id} className="border-t">
+                                                            <td className="py-2">{a.director_name || a.director_id}</td>
+                                                            <td className="py-2">£{parseFloat(a.total_balance).toFixed(2)}</td>
+                                                            <td className="py-2">{a.oldest_movement ? new Date(a.oldest_movement).toLocaleDateString() : '—'}</td>
+                                                            <td className="py-2">{a.days_outstanding || 0}</td>
+                                                        </tr>
+                                                    ))}
+                                                    {s455Alerts.length === 0 && (
+                                                        <tr><td colSpan="4" className="py-4 text-center text-gray-500">No alerts</td></tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         {activeTab === 'dla' && (
                             <div>
                                 <div className="flex items-center justify-between">
@@ -2871,8 +3000,17 @@
                                         <div className="bg-white rounded-lg p-6 z-10 w-full max-w-lg">
                                             <h3 className="text-lg font-semibold mb-3">Add DLA Movement</h3>
                                             <form onSubmit={submitDlaForm}>
-                                                <label className="block text-sm text-gray-700">Director ID (UUID)</label>
-                                                <input className="w-full p-2 border rounded mb-3" value={dlaForm.director_id} onChange={e => setDlaForm(prev => ({ ...prev, director_id: e.target.value }))} required />
+                                                <label className="block text-sm text-gray-700">Director</label>
+                                                {directorsList && directorsList.length > 0 ? (
+                                                    <select className="w-full p-2 border rounded mb-3" value={dlaForm.director_id} onChange={e => setDlaForm(prev => ({ ...prev, director_id: e.target.value }))} required>
+                                                        <option value="">Select director…</option>
+                                                        {directorsList.map(d => (
+                                                            <option key={d.id} value={d.id}>{d.name || d.email || d.id}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input className="w-full p-2 border rounded mb-3" placeholder="Director UUID or name" value={dlaForm.director_id} onChange={e => setDlaForm(prev => ({ ...prev, director_id: e.target.value }))} required />
+                                                )}
 
                                                 <label className="block text-sm text-gray-700">Amount</label>
                                                 <input type="number" step="0.01" className="w-full p-2 border rounded mb-3" value={dlaForm.amount} onChange={e => setDlaForm(prev => ({ ...prev, amount: e.target.value }))} required />
