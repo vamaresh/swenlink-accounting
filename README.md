@@ -74,6 +74,17 @@ Replace `YOUR-USERNAME` with your actual GitHub username.
         // React Components and App Code
         const { useState, useEffect } = React;
 
+        // --- DATA ADAPTER PATTERN ---
+        // This allows switching between LocalStorage and Supabase easily
+        const DataAdapter = {
+            save: (key, data) => {
+                localStorage.setItem(key, JSON.stringify(data));
+            },
+            load: (key) => {
+                return JSON.parse(localStorage.getItem(key) || 'null');
+            }
+        };
+
         // Icon Component (simplified SVG icons)
         const Icon = ({ name, className = "w-6 h-6" }) => {
             const paths = {
@@ -156,7 +167,7 @@ Replace `YOUR-USERNAME` with your actual GitHub username.
             }, []);
 
             const loadData = () => {
-                const saved = localStorage.getItem('swenlink-data');
+                const saved = DataAdapter.load('swenlink-data');
                 if (saved) setData(JSON.parse(saved));
             };
 
@@ -179,7 +190,7 @@ Replace `YOUR-USERNAME` with your actual GitHub username.
 
             const saveData = (newData) => {
                 setData(newData);
-                localStorage.setItem('swenlink-data', JSON.stringify(newData));
+                DataAdapter.save('swenlink-data', newData);
             };
 
             const exportData = () => {
