@@ -1960,7 +1960,7 @@
                                 const amount = paidIn > 0 ? paidIn : -paidOut;
                                 
                                 transactions.push({
-                                    date: parts[0].replace(/'/g, ''), // Remove leading apostrophe
+                                    date: parts[0].replace(/'/g, '').split(' ')[0], // Remove leading apostrophe and time
                                     transaction_id: parts[1].replace(/'/g, ''),
                                     description: parts[2],
                                     reference: parts[3],
@@ -1969,6 +1969,7 @@
                                     paid_in: paidIn,
                                     paid_out: paidOut,
                                     amount: amount,
+                                    type: paidIn > 0 ? 'credit' : 'debit',
                                     category: parts[8],
                                     transaction_type: parts[9],
                                     status: parts[10],
