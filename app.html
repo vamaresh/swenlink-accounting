@@ -461,7 +461,11 @@
                 if (data.company?.id && activeTab === 'alerts') {
                     loadS455Alerts();
                 }
-            }, [data.company?.id, activeTab]);
+                // Automatically fetch key dates when company has reg number and settings tab is opened
+                if (data.company?.regNumber && !companyRegDate && (activeTab === 'settings' || activeTab === 'alerts')) {
+                    fetchCompanyRegistrationDate().catch(err => console.warn('Auto-fetch key dates failed', err));
+                }
+            }, [data.company?.id, data.company?.regNumber, activeTab]);
 
             async function loadS455Alerts() {
                 if (!data.company?.id) return
@@ -2784,19 +2788,6 @@
                                     {data.company.financialYearStart && <p className="text-xs text-gray-300"><span className="font-semibold">FY Start:</span> {new Date(data.company.financialYearStart).toLocaleDateString()}</p>}
                                 </div>
                             )}
-                            {!sidebarCollapsed && (
-                                <div className="mt-3 pt-3 border-t border-gray-700">
-                                    <h4 className="text-xs text-gray-300 font-semibold">Key Dates</h4>
-                                    <div className="text-xs text-gray-300 mt-2">
-                                        <div><span className="font-medium">Registered:</span> {companyRegDate ? new Date(companyRegDate).toLocaleDateString() : (data.company.regNumber ? 'Unknown' : '—')}</div>
-                                        <div><span className="font-medium">Next Accounts Due:</span> {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString() : '—'}</div>
-                                        <div><span className="font-medium">Confirmation Statement Due:</span> {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}</div>
-                                    </div>
-                                    <div className="mt-2">
-                                        <button className="text-blue-300 text-xs" onClick={async () => { await fetchCompanyRegistrationDate(); }}>Fetch registration date</button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                         
                         <nav className={`sidebar-nav ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
@@ -2913,56 +2904,56 @@
 
                         {activeTab === 'alerts' && (
                             <div>
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-xl font-bold">Alerts</h2>
+                                <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <button onClick={loadS455Alerts} className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Refresh</button>
+                                        <h2 className="text-2xl font-bold text-gray-900">S455 Tax Alerts</h2>
+                                        <p className="text-sm text-gray-600 mt-1">Monitor director loan accounts for potential S455 tax liabilities</p>
                                     </div>
+                                    <button onClick={loadS455Alerts} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">
+                                        Refresh
+                                    </button>
                                 </div>
 
-                                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div className="bg-white rounded-lg p-3 surface-card">
-                                        <h4 className="text-sm font-semibold">Key Dates</h4>
-                                        <div className="text-xs text-gray-600 mt-2">
-                                            <div><span className="font-medium">Registered:</span> {companyRegDate ? new Date(companyRegDate).toLocaleDateString() : (data.company?.regNumber ? 'Unknown' : '—')}</div>
-                                            <div><span className="font-medium">Next Accounts Due:</span> {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString() : '—'}</div>
-                                            <div><span className="font-medium">Confirmation Due:</span> {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}</div>
-                                        </div>
-                                        <div className="mt-2">
-                                            <button className="text-blue-500 text-xs" onClick={async () => { try { await fetchCompanyRegistrationDate(); } catch(e){ alert('Fetch failed') } }}>Fetch registration date</button>
-                                        </div>
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                        {s455Loading ? (
-                                            <div className="text-sm text-gray-500">Loading alerts…</div>
-                                        ) : (
-                                            <div className="overflow-x-auto bg-white rounded-lg p-3 surface-card">
-                                                <table className="w-full text-sm">
+                                <div className="bg-white rounded-2xl p-6 shadow-sm">
+                                    {s455Loading ? (
+                                        <div className="text-center py-8 text-gray-500">Loading alerts…</div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
                                                 <thead>
-                                                    <tr className="text-left text-gray-600">
-                                                        <th className="py-2">Director</th>
-                                                        <th className="py-2">Total Balance</th>
-                                                        <th className="py-2">Oldest Movement</th>
-                                                        <th className="py-2">Days Outstanding</th>
+                                                    <tr className="text-left border-b border-gray-200">
+                                                        <th className="py-3 px-4 font-semibold text-gray-700">Director</th>
+                                                        <th className="py-3 px-4 font-semibold text-gray-700">Total Balance</th>
+                                                        <th className="py-3 px-4 font-semibold text-gray-700">Oldest Movement</th>
+                                                        <th className="py-3 px-4 font-semibold text-gray-700">Days Outstanding</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {s455Alerts.map(a => (
-                                                        <tr key={a.director_id} className="border-t">
-                                                            <td className="py-2">{a.director_name || a.director_id}</td>
-                                                            <td className="py-2">£{parseFloat(a.total_balance).toFixed(2)}</td>
-                                                            <td className="py-2">{a.oldest_movement ? new Date(a.oldest_movement).toLocaleDateString() : '—'}</td>
-                                                            <td className="py-2">{a.days_outstanding || 0}</td>
+                                                        <tr key={a.director_id} className="border-b border-gray-100 hover:bg-gray-50">
+                                                            <td className="py-3 px-4">{a.director_name || a.director_id}</td>
+                                                            <td className="py-3 px-4 font-semibold">£{parseFloat(a.total_balance).toFixed(2)}</td>
+                                                            <td className="py-3 px-4">{a.oldest_movement ? new Date(a.oldest_movement).toLocaleDateString() : '—'}</td>
+                                                            <td className="py-3 px-4">{a.days_outstanding || 0} days</td>
                                                         </tr>
                                                     ))}
                                                     {s455Alerts.length === 0 && (
-                                                        <tr><td colSpan="4" className="py-4 text-center text-gray-500">No alerts</td></tr>
+                                                        <tr>
+                                                            <td colSpan="4" className="py-8 text-center text-gray-500">
+                                                                No S455 alerts at this time. All director loan balances are within acceptable limits.
+                                                            </td>
+                                                        </tr>
                                                     )}
                                                 </tbody>
                                             </table>
                                         </div>
-                                        )}
+                                    )}
+                                    
+                                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                                        <p className="text-sm text-gray-700">
+                                            <strong>About S455:</strong> If a director borrows from the company and doesn't repay within 9 months after the company's year-end, 
+                                            the company may need to pay S455 tax at 33.75% on the outstanding balance until it's repaid.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -3382,6 +3373,51 @@
                                         <p className="text-lg font-semibold text-gray-900 mt-2">{settingsForm.invoicePrefix || 'INV'}-2025-001</p>
                                         <p className="text-sm text-gray-700">Due in {settingsForm.paymentTerms || defaultPreferences.paymentTerms} days • Currency {settingsForm.currency}</p>
                                         <p className="text-xs text-gray-600 mt-2">{settingsForm.autoReminders ? 'Automatic reminder workflow enabled.' : 'Reminders are currently disabled.'}</p>
+                                    </div>
+                                </section>
+                                <section className="bg-white rounded-2xl p-6 space-y-5 lg:col-span-2">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs uppercase tracking-[0.3em] text-purple-600">Compliance</p>
+                                            <h3 className="text-2xl font-semibold text-gray-900">Key Dates</h3>
+                                            <p className="text-sm text-gray-600 mt-1">Track important deadlines for Companies House and HMRC.</p>
+                                        </div>
+                                        <Icon name="Calendar" className="w-10 h-10 text-purple-600" />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div className="bg-gray-50 rounded-lg p-4">
+                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Company Registration</p>
+                                            <p className="text-lg font-bold text-gray-900 mt-2">
+                                                {companyRegDate ? new Date(companyRegDate).toLocaleDateString() : (data.company?.regNumber ? 'Unknown' : '—')}
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-4">
+                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Next Accounts Due</p>
+                                            <p className="text-lg font-bold text-gray-900 mt-2">
+                                                {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString() : '—'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-4">
+                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Confirmation Statement Due</p>
+                                            <p className="text-lg font-bold text-gray-900 mt-2">
+                                                {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={async () => { 
+                                                try { 
+                                                    await fetchCompanyRegistrationDate(); 
+                                                } catch(e) { 
+                                                    alert('Failed to fetch registration date. Please check the company registration number.'); 
+                                                } 
+                                            }}
+                                            className="text-sm font-semibold text-purple-600 hover:text-purple-700 underline"
+                                        >
+                                            Fetch from Companies House
+                                        </button>
                                     </div>
                                 </section>
                                 <div className="bg-white rounded-2xl p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
