@@ -465,15 +465,7 @@
                 if (data.company?.id && activeTab === 'alerts') {
                     loadS455Alerts();
                 }
-                // Automatically fetch key dates when company has reg number and settings tab is opened
-                // Silent auto-fetch - won't show error alerts
-                if (data.company?.regNumber && !companyRegDate && (activeTab === 'settings' || activeTab === 'alerts')) {
-                    fetchCompanyRegistrationDate().catch(err => {
-                        console.warn('Auto-fetch key dates failed (silent):', err.message)
-                        // Don't alert on auto-fetch failures
-                    });
-                }
-            }, [data.company?.id, data.company?.regNumber, activeTab]);
+            }, [data.company?.id, activeTab]);
 
             async function loadS455Alerts() {
                 if (!data.company?.id) return
@@ -2779,6 +2771,7 @@
                 {id: 'suppliers', icon: 'Users', label: 'Suppliers'},
                 {id: 'invoices', icon: 'FileText', label: 'Sales Invoices'},
                 {id: 'dla', icon: 'DollarSign', label: "DLA Movements"},
+                {id: 'keydates', icon: 'Calendar', label: 'Key Dates'},
                 {id: 'alerts', icon: 'AlertCircle', label: 'Alerts'},
                 {id: 'bills', icon: 'Receipt', label: 'Purchase Bills'},
                 {id: 'expenses', icon: 'CreditCard', label: 'Expenses'},
@@ -3000,6 +2993,144 @@
                                             <strong>About S455:</strong> If a director borrows from the company and doesn't repay within 9 months after the company's year-end, 
                                             the company may need to pay S455 tax at 33.75% on the outstanding balance until it's repaid.
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {activeTab === 'keydates' && (
+                            <div>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-gray-900">Key Dates & Compliance</h2>
+                                        <p className="text-sm text-gray-600 mt-1">Track important deadlines for Companies House and HMRC</p>
+                                    </div>
+                                    <button 
+                                        onClick={async () => { 
+                                            try { 
+                                                await fetchCompanyRegistrationDate(); 
+                                            } catch(e) { 
+                                                alert(e.message || 'Failed to fetch from Companies House'); 
+                                            } 
+                                        }}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
+                                    >
+                                        <Icon name="RefreshCw" className="w-4 h-4" />
+                                        Fetch from Companies House
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                    <div className="bg-white rounded-2xl p-6 shadow-sm">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Registration Date</p>
+                                            <Icon name="Building2" className="w-5 h-5 text-gray-400" />
+                                        </div>
+                                        <p className="text-2xl font-bold text-gray-900">
+                                            {companyRegDate ? new Date(companyRegDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : (data.company?.regNumber ? 'Unknown' : '—')}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Company incorporated</p>
+                                    </div>
+
+                                    <div className={`rounded-2xl p-6 shadow-sm ${accountsOverdue ? 'bg-red-50 border-2 border-red-400' : 'bg-white'}`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className={`text-xs font-semibold uppercase tracking-wide ${accountsOverdue ? 'text-red-700' : 'text-gray-500'}`}>Accounts Due</p>
+                                            <Icon name="FileText" className={`w-5 h-5 ${accountsOverdue ? 'text-red-500' : 'text-gray-400'}`} />
+                                        </div>
+                                        <p className={`text-2xl font-bold ${accountsOverdue ? 'text-red-700' : 'text-gray-900'}`}>
+                                            {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                                        </p>
+                                        {accountsOverdue ? (
+                                            <p className="text-xs text-red-600 mt-1 font-semibold">⚠️ OVERDUE - File now</p>
+                                        ) : (
+                                            <p className="text-xs text-gray-500 mt-1">Next filing deadline</p>
+                                        )}
+                                    </div>
+
+                                    <div className={`rounded-2xl p-6 shadow-sm ${confirmationOverdue ? 'bg-red-50 border-2 border-red-400' : 'bg-white'}`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className={`text-xs font-semibold uppercase tracking-wide ${confirmationOverdue ? 'text-red-700' : 'text-gray-500'}`}>Confirmation Due</p>
+                                            <Icon name="CheckCircle" className={`w-5 h-5 ${confirmationOverdue ? 'text-red-500' : 'text-gray-400'}`} />
+                                        </div>
+                                        <p className={`text-2xl font-bold ${confirmationOverdue ? 'text-red-700' : 'text-gray-900'}`}>
+                                            {confirmationDue ? new Date(confirmationDue).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                                        </p>
+                                        {confirmationOverdue ? (
+                                            <p className="text-xs text-red-600 mt-1 font-semibold">⚠️ OVERDUE - File now</p>
+                                        ) : (
+                                            <p className="text-xs text-gray-500 mt-1">Confirmation statement</p>
+                                        )}
+                                    </div>
+
+                                    <div className="bg-white rounded-2xl p-6 shadow-sm">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Filed</p>
+                                            <Icon name="Calendar" className="w-5 h-5 text-gray-400" />
+                                        </div>
+                                        <p className="text-2xl font-bold text-gray-900">
+                                            {lastAccountsDate ? new Date(lastAccountsDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Last accounts submitted</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="bg-white rounded-2xl p-6 shadow-sm">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                            <Icon name="Info" className="w-5 h-5 text-blue-600" />
+                                            Filing History
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {lastConfirmationDate && (
+                                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-gray-900">Last Confirmation Statement</p>
+                                                        <p className="text-xs text-gray-500">Annual update filed</p>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {new Date(lastConfirmationDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {lastAccountsDate && (
+                                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-gray-900">Last Accounts Filed</p>
+                                                        <p className="text-xs text-gray-500">Annual accounts submitted</p>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {new Date(lastAccountsDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {!lastConfirmationDate && !lastAccountsDate && (
+                                                <p className="text-sm text-gray-500 text-center py-4">No filing history available. Click "Fetch from Companies House" to load data.</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 shadow-sm">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                            <Icon name="AlertCircle" className="w-5 h-5 text-purple-600" />
+                                            Compliance Tips
+                                        </h3>
+                                        <div className="space-y-3 text-sm text-gray-700">
+                                            <div className="flex gap-3">
+                                                <span className="text-purple-600 font-bold">•</span>
+                                                <p><strong>Confirmation Statement:</strong> Must be filed at least once every 12 months, even if nothing has changed.</p>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <span className="text-purple-600 font-bold">•</span>
+                                                <p><strong>Accounts:</strong> Due 9 months after your financial year-end (6 months for public companies).</p>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <span className="text-purple-600 font-bold">•</span>
+                                                <p><strong>Late Filing:</strong> Companies House charges automatic penalties for late accounts and confirmation statements.</p>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <span className="text-purple-600 font-bold">•</span>
+                                                <p><strong>Directors:</strong> Directors can be personally liable for continued failure to file.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3419,64 +3550,6 @@
                                         <p className="text-lg font-semibold text-gray-900 mt-2">{settingsForm.invoicePrefix || 'INV'}-2025-001</p>
                                         <p className="text-sm text-gray-700">Due in {settingsForm.paymentTerms || defaultPreferences.paymentTerms} days • Currency {settingsForm.currency}</p>
                                         <p className="text-xs text-gray-600 mt-2">{settingsForm.autoReminders ? 'Automatic reminder workflow enabled.' : 'Reminders are currently disabled.'}</p>
-                                    </div>
-                                </section>
-                                <section className="bg-white rounded-2xl p-6 space-y-5 lg:col-span-2">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-xs uppercase tracking-[0.3em] text-purple-600">Compliance</p>
-                                            <h3 className="text-2xl font-semibold text-gray-900">Key Dates</h3>
-                                            <p className="text-sm text-gray-600 mt-1">Track important deadlines for Companies House and HMRC.</p>
-                                        </div>
-                                        <Icon name="Calendar" className="w-10 h-10 text-purple-600" />
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Company Registration</p>
-                                            <p className="text-lg font-bold text-gray-900 mt-2">
-                                                {companyRegDate ? new Date(companyRegDate).toLocaleDateString() : (data.company?.regNumber ? 'Unknown' : '—')}
-                                            </p>
-                                        </div>
-                                        <div className={`rounded-lg p-4 ${accountsOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50'}`}>
-                                            <p className={`text-xs font-semibold uppercase tracking-wide ${accountsOverdue ? 'text-red-700' : 'text-gray-600'}`}>Next Accounts Due</p>
-                                            <p className={`text-lg font-bold mt-2 ${accountsOverdue ? 'text-red-700' : 'text-gray-900'}`}>
-                                                {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString() : '—'}
-                                            </p>
-                                            {accountsOverdue && <p className="text-xs text-red-600 mt-1 font-semibold">⚠️ OVERDUE</p>}
-                                        </div>
-                                        <div className={`rounded-lg p-4 ${confirmationOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50'}`}>
-                                            <p className={`text-xs font-semibold uppercase tracking-wide ${confirmationOverdue ? 'text-red-700' : 'text-gray-600'}`}>Confirmation Statement Due</p>
-                                            <p className={`text-lg font-bold mt-2 ${confirmationOverdue ? 'text-red-700' : 'text-gray-900'}`}>
-                                                {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}
-                                            </p>
-                                            {confirmationOverdue && <p className="text-xs text-red-600 mt-1 font-semibold">⚠️ OVERDUE</p>}
-                                        </div>
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Last Accounts Filed</p>
-                                            <p className="text-lg font-bold text-gray-900 mt-2">
-                                                {lastAccountsDate ? new Date(lastAccountsDate).toLocaleDateString() : '—'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {lastConfirmationDate && (
-                                        <div className="bg-blue-50 rounded-lg p-3 text-sm text-gray-700">
-                                            <strong>Last Confirmation Statement:</strong> {new Date(lastConfirmationDate).toLocaleDateString()}
-                                        </div>
-                                    )}
-                                    <div className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={async () => { 
-                                                try { 
-                                                    await fetchCompanyRegistrationDate(); 
-                                                } catch(e) { 
-                                                    alert(e.message || 'Failed to fetch registration date. Please check the company registration number.'); 
-                                                } 
-                                            }}
-                                            className="text-sm font-semibold text-purple-600 hover:text-purple-700 underline"
-                                        >
-                                            Fetch from Companies House
-                                        </button>
                                     </div>
                                 </section>
                                 <div className="bg-white rounded-2xl p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
