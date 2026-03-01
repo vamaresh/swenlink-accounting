@@ -1935,43 +1935,102 @@
                 window.location.href = mailtoLink;
             };
 
-            const importBankCSV = (e) => {
+            const importBankCSV = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 
                 const reader = new FileReader();
-                reader.onload = (event) => {
+                reader.onload = async (event) => {
                     try {
                         const csv = event.target.result;
                         const lines = csv.split('\n');
                         const transactions = [];
                         
-                        // Skip header row, parse CSV (simple implementation)
+                        // Parse Tide CSV format
+                        // Header: Date,Transaction ID,Transaction description,Reference,From,To,Paid in,Paid out,Category name,Transaction type,Status,Initiated by
                         for (let i = 1; i < lines.length; i++) {
                             const line = lines[i].trim();
                             if (!line) continue;
                             
-                            const parts = line.split(',');
-                            if (parts.length >= 4) {
+                            // Parse CSV with quoted fields support
+                            const parts = parseCSVLine(line);
+                            if (parts.length >= 12) {
+                                const paidIn = parseFloat(parts[6].replace(/,/g, '')) || 0;
+                                const paidOut = parseFloat(parts[7].replace(/,/g, '')) || 0;
+                                const amount = paidIn > 0 ? paidIn : -paidOut;
+                                
                                 transactions.push({
-                                    id: Date.now() + i,
-                                    date: parts[0],
-                                    description: parts[1],
-                                    amount: parseFloat(parts[2]),
-                                    balance: parseFloat(parts[3])
+                                    date: parts[0].replace(/'/g, ''), // Remove leading apostrophe
+                                    transaction_id: parts[1].replace(/'/g, ''),
+                                    description: parts[2],
+                                    reference: parts[3],
+                                    from_party: parts[4],
+                                    to_party: parts[5],
+                                    paid_in: paidIn,
+                                    paid_out: paidOut,
+                                    amount: amount,
+                                    category: parts[8],
+                                    transaction_type: parts[9],
+                                    status: parts[10],
+                                    initiated_by: parts[11],
+                                    clerk_user_id: user?.id || user?.primaryEmailAddress?.emailAddress || 'unknown'
                                 });
                             }
                         }
                         
-                        const newData = {...data};
-                        newData.bankTransactions = [...newData.bankTransactions, ...transactions];
-                        saveData(newData);
-                        alert(`Imported ${transactions.length} transactions successfully!`);
+                        if (transactions.length === 0) {
+                            alert('No transactions found in CSV file.');
+                            return;
+                        }
+                        
+                        // Save to Supabase
+                        await ensureSupabaseToken();
+                        const { data: insertedData, error } = await supabaseClient
+                            .from('bank_transactions')
+                            .insert(transactions)
+                            .select();
+                        
+                        if (error) {
+                            console.error('Error saving transactions:', error);
+                            alert(`Error saving transactions: ${error.message}`);
+                            return;
+                        }
+                        
+                        // Update local state
+                        setData(prev => ({
+                            ...prev,
+                            bankTransactions: [...prev.bankTransactions, ...(insertedData || [])]
+                        }));
+                        
+                        alert(`Successfully imported ${transactions.length} transactions from Tide!`);
                     } catch (error) {
+                        console.error('CSV import error:', error);
                         alert('Error importing CSV file. Please check the format.');
                     }
                 };
                 reader.readAsText(file);
+            };
+            
+            // Helper function to parse CSV line with quoted fields
+            const parseCSVLine = (line) => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                result.push(current.trim());
+                return result;
             };
 
             const exportData = () => {
@@ -4034,30 +4093,50 @@
                                         </label>
                                     </div>
                                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                                        <p className="text-sm text-gray-700"><strong>Note:</strong> For Tide bank integration, export your transactions as CSV from Tide's web portal. The CSV should have columns: Date, Description, Amount, Balance</p>
-                                        <p className="text-sm text-gray-600 mt-2">Future versions may include direct API integration with Tide.</p>
+                                        <p className="text-sm text-gray-700"><strong>Tide Bank CSV Import:</strong> Login to Tide → Accounts → Export → Download CSV with all columns</p>
+                                        <p className="text-sm text-gray-600 mt-1">The system will automatically import all transaction details including categories, parties, and payment types.</p>
                                     </div>
                                     <div className="overflow-x-auto">
-                                        <table className="w-full">
+                                        <table className="w-full text-sm">
                                             <thead className="bg-gray-50">
                                                 <tr>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold">Description</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold">Amount</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold">Balance</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-semibold">Date</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-semibold">Description</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-semibold">From/To</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-semibold">Category</th>
+                                                    <th className="px-3 py-2 text-right text-xs font-semibold">Paid In</th>
+                                                    <th className="px-3 py-2 text-right text-xs font-semibold">Paid Out</th>
+                                                    <th className="px-3 py-2 text-center text-xs font-semibold">Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {data.bankTransactions?.length === 0 || !data.bankTransactions ? (
-                                                    <tr><td colSpan="4" className="text-center py-8 text-gray-500">No transactions imported yet.</td></tr>
+                                                    <tr><td colSpan="7" className="text-center py-8 text-gray-500">No transactions imported yet. Upload a Tide CSV to get started.</td></tr>
                                                 ) : data.bankTransactions.map(txn => (
                                                     <tr key={txn.id} className="border-t hover:bg-gray-50">
-                                                        <td className="px-4 py-3">{txn.date}</td>
-                                                        <td className="px-4 py-3">{txn.description}</td>
-                                                        <td className={`px-4 py-3 font-semibold ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                            £{txn.amount.toFixed(2)}
+                                                        <td className="px-3 py-2 text-xs">{new Date(txn.date).toLocaleDateString('en-GB')}</td>
+                                                        <td className="px-3 py-2 text-xs">
+                                                            <div className="font-medium">{txn.description}</div>
+                                                            {txn.reference && <div className="text-gray-500 text-xs">{txn.reference}</div>}
                                                         </td>
-                                                        <td className="px-4 py-3 font-semibold">£{txn.balance.toFixed(2)}</td>
+                                                        <td className="px-3 py-2 text-xs">
+                                                            {txn.from_party && <div className="text-gray-600">From: {txn.from_party}</div>}
+                                                            {txn.to_party && <div className="text-gray-600">To: {txn.to_party}</div>}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-xs">
+                                                            <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs">{txn.category || 'Uncategorized'}</span>
+                                                        </td>
+                                                        <td className="px-3 py-2 text-xs text-right font-semibold text-green-600">
+                                                            {txn.paid_in > 0 ? `£${txn.paid_in.toLocaleString()}` : '—'}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-xs text-right font-semibold text-red-600">
+                                                            {txn.paid_out > 0 ? `£${txn.paid_out.toLocaleString()}` : '—'}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-center">
+                                                            <span className={`inline-block px-2 py-1 rounded text-xs ${txn.status === 'Cleared' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                                {txn.status || 'Unknown'}
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
