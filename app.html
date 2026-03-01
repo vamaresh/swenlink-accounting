@@ -403,6 +403,10 @@
                 const [companyRegDate, setCompanyRegDate] = React.useState(null)
                 const [nextAccountsDue, setNextAccountsDue] = React.useState(null)
                 const [confirmationDue, setConfirmationDue] = React.useState(null)
+                const [lastAccountsDate, setLastAccountsDate] = React.useState(null)
+                const [lastConfirmationDate, setLastConfirmationDate] = React.useState(null)
+                const [accountsOverdue, setAccountsOverdue] = React.useState(false)
+                const [confirmationOverdue, setConfirmationOverdue] = React.useState(false)
                 const [s455Alerts, setS455Alerts] = React.useState([])
                 const [s455Loading, setS455Loading] = React.useState(false)
 
@@ -520,26 +524,48 @@
                         }
                     }
                     const j = await resp.json()
-                    // companies house responses vary; look for common date fields
+                    
+                    // Extract registration date
                     const dateStr = j && (j.date_of_creation || j.date_registered || j.registered_on || j.creation_date)
                     if (dateStr) {
                         setCompanyRegDate(dateStr)
-                        const reg = new Date(dateStr)
-                        const nextConf = new Date(reg)
-                        nextConf.setFullYear(nextConf.getFullYear() + 1)
-                        setConfirmationDue(nextConf.toISOString())
-
-                        const fyStart = data.company.financialYearStart ? new Date(data.company.financialYearStart) : new Date(reg)
-                        const accountsEnd = new Date(fyStart)
-                        accountsEnd.setFullYear(accountsEnd.getFullYear() + 1)
-                        const due = new Date(accountsEnd)
-                        due.setMonth(due.getMonth() + 9)
-                        due.setDate(due.getDate() + 7)
-                        setNextAccountsDue(due.toISOString())
-                        
+                    }
+                    
+                    // Extract accounts information from API
+                    if (j.accounts) {
+                        if (j.accounts.next_accounts?.due_on || j.accounts.next_due) {
+                            setNextAccountsDue(j.accounts.next_accounts?.due_on || j.accounts.next_due)
+                        }
+                        if (j.accounts.last_accounts?.period_end_on || j.accounts.last_accounts?.made_up_to) {
+                            setLastAccountsDate(j.accounts.last_accounts?.period_end_on || j.accounts.last_accounts?.made_up_to)
+                        }
+                        setAccountsOverdue(j.accounts.next_accounts?.overdue || j.accounts.overdue || false)
+                    }
+                    
+                    // Extract confirmation statement information
+                    if (j.confirmation_statement) {
+                        if (j.confirmation_statement.next_due) {
+                            setConfirmationDue(j.confirmation_statement.next_due)
+                        }
+                        if (j.confirmation_statement.last_made_up_to) {
+                            setLastConfirmationDate(j.confirmation_statement.last_made_up_to)
+                        }
+                        setConfirmationOverdue(j.confirmation_statement.overdue || false)
+                    } else if (j.annual_return) {
+                        // Fallback for older companies still using annual returns
+                        if (j.annual_return.next_due) {
+                            setConfirmationDue(j.annual_return.next_due)
+                        }
+                        if (j.annual_return.last_made_up_to) {
+                            setLastConfirmationDate(j.annual_return.last_made_up_to)
+                        }
+                        setConfirmationOverdue(j.annual_return.overdue || false)
+                    }
+                    
+                    if (dateStr || j.accounts || j.confirmation_statement) {
                         alert('Key dates fetched successfully from Companies House!')
                     } else {
-                        throw new Error('Registration date not found in Companies House response.')
+                        throw new Error('No date information found in Companies House response.')
                     }
                 } catch (err) {
                     console.warn('Companies House fetch failed', err)
@@ -3404,26 +3430,39 @@
                                         </div>
                                         <Icon name="Calendar" className="w-10 h-10 text-purple-600" />
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                         <div className="bg-gray-50 rounded-lg p-4">
                                             <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Company Registration</p>
                                             <p className="text-lg font-bold text-gray-900 mt-2">
                                                 {companyRegDate ? new Date(companyRegDate).toLocaleDateString() : (data.company?.regNumber ? 'Unknown' : '—')}
                                             </p>
                                         </div>
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Next Accounts Due</p>
-                                            <p className="text-lg font-bold text-gray-900 mt-2">
+                                        <div className={`rounded-lg p-4 ${accountsOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50'}`}>
+                                            <p className={`text-xs font-semibold uppercase tracking-wide ${accountsOverdue ? 'text-red-700' : 'text-gray-600'}`}>Next Accounts Due</p>
+                                            <p className={`text-lg font-bold mt-2 ${accountsOverdue ? 'text-red-700' : 'text-gray-900'}`}>
                                                 {nextAccountsDue ? new Date(nextAccountsDue).toLocaleDateString() : '—'}
                                             </p>
+                                            {accountsOverdue && <p className="text-xs text-red-600 mt-1 font-semibold">⚠️ OVERDUE</p>}
+                                        </div>
+                                        <div className={`rounded-lg p-4 ${confirmationOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50'}`}>
+                                            <p className={`text-xs font-semibold uppercase tracking-wide ${confirmationOverdue ? 'text-red-700' : 'text-gray-600'}`}>Confirmation Statement Due</p>
+                                            <p className={`text-lg font-bold mt-2 ${confirmationOverdue ? 'text-red-700' : 'text-gray-900'}`}>
+                                                {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}
+                                            </p>
+                                            {confirmationOverdue && <p className="text-xs text-red-600 mt-1 font-semibold">⚠️ OVERDUE</p>}
                                         </div>
                                         <div className="bg-gray-50 rounded-lg p-4">
-                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Confirmation Statement Due</p>
+                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Last Accounts Filed</p>
                                             <p className="text-lg font-bold text-gray-900 mt-2">
-                                                {confirmationDue ? new Date(confirmationDue).toLocaleDateString() : '—'}
+                                                {lastAccountsDate ? new Date(lastAccountsDate).toLocaleDateString() : '—'}
                                             </p>
                                         </div>
                                     </div>
+                                    {lastConfirmationDate && (
+                                        <div className="bg-blue-50 rounded-lg p-3 text-sm text-gray-700">
+                                            <strong>Last Confirmation Statement:</strong> {new Date(lastConfirmationDate).toLocaleDateString()}
+                                        </div>
+                                    )}
                                     <div className="flex gap-3">
                                         <button
                                             type="button"
