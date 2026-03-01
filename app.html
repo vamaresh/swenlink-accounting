@@ -517,45 +517,83 @@
                     }
                     const j = await resp.json()
                     
-                    // Extract registration date
+                    // Extract all dates from API response
                     const dateStr = j && (j.date_of_creation || j.date_registered || j.registered_on || j.creation_date)
+                    let updates = { key_dates_last_fetched: new Date().toISOString() }
+                    
                     if (dateStr) {
                         setCompanyRegDate(dateStr)
+                        updates.company_reg_date = dateStr
                     }
                     
                     // Extract accounts information from API
                     if (j.accounts) {
                         if (j.accounts.next_accounts?.due_on || j.accounts.next_due) {
-                            setNextAccountsDue(j.accounts.next_accounts?.due_on || j.accounts.next_due)
+                            const nextDue = j.accounts.next_accounts?.due_on || j.accounts.next_due
+                            setNextAccountsDue(nextDue)
+                            updates.next_accounts_due = nextDue
                         }
                         if (j.accounts.last_accounts?.period_end_on || j.accounts.last_accounts?.made_up_to) {
-                            setLastAccountsDate(j.accounts.last_accounts?.period_end_on || j.accounts.last_accounts?.made_up_to)
+                            const lastDate = j.accounts.last_accounts?.period_end_on || j.accounts.last_accounts?.made_up_to
+                            setLastAccountsDate(lastDate)
+                            updates.last_accounts_date = lastDate
                         }
-                        setAccountsOverdue(j.accounts.next_accounts?.overdue || j.accounts.overdue || false)
+                        const isOverdue = j.accounts.next_accounts?.overdue || j.accounts.overdue || false
+                        setAccountsOverdue(isOverdue)
+                        updates.accounts_overdue = isOverdue
                     }
                     
                     // Extract confirmation statement information
                     if (j.confirmation_statement) {
                         if (j.confirmation_statement.next_due) {
                             setConfirmationDue(j.confirmation_statement.next_due)
+                            updates.confirmation_due = j.confirmation_statement.next_due
                         }
                         if (j.confirmation_statement.last_made_up_to) {
                             setLastConfirmationDate(j.confirmation_statement.last_made_up_to)
+                            updates.last_confirmation_date = j.confirmation_statement.last_made_up_to
                         }
-                        setConfirmationOverdue(j.confirmation_statement.overdue || false)
+                        const isOverdue = j.confirmation_statement.overdue || false
+                        setConfirmationOverdue(isOverdue)
+                        updates.confirmation_overdue = isOverdue
                     } else if (j.annual_return) {
                         // Fallback for older companies still using annual returns
                         if (j.annual_return.next_due) {
                             setConfirmationDue(j.annual_return.next_due)
+                            updates.confirmation_due = j.annual_return.next_due
                         }
                         if (j.annual_return.last_made_up_to) {
                             setLastConfirmationDate(j.annual_return.last_made_up_to)
+                            updates.last_confirmation_date = j.annual_return.last_made_up_to
                         }
-                        setConfirmationOverdue(j.annual_return.overdue || false)
+                        const isOverdue = j.annual_return.overdue || false
+                        setConfirmationOverdue(isOverdue)
+                        updates.confirmation_overdue = isOverdue
                     }
                     
+                    // Save to database
+                    await ensureSupabaseToken()
+                    const { error: updateError } = await supabaseClient
+                        .from('companies')
+                        .update(updates)
+                        .eq('id', data.company.id)
+                    
+                    if (updateError) {
+                        console.error('Failed to save key dates to database:', updateError)
+                        throw new Error('Failed to save dates to database')
+                    }
+                    
+                    // Update local state
+                    setData(prev => ({
+                        ...prev,
+                        company: {
+                            ...prev.company,
+                            ...updates
+                        }
+                    }))
+                    
                     if (dateStr || j.accounts || j.confirmation_statement) {
-                        alert('Key dates fetched successfully from Companies House!')
+                        alert('Key dates fetched and saved successfully!')
                     } else {
                         throw new Error('No date information found in Companies House response.')
                     }
@@ -811,6 +849,15 @@
                                 mtdEnabled: true
                             }
                         }));
+                        
+                        // Load saved key dates from database
+                        if (company.company_reg_date) setCompanyRegDate(company.company_reg_date)
+                        if (company.next_accounts_due) setNextAccountsDue(company.next_accounts_due)
+                        if (company.confirmation_due) setConfirmationDue(company.confirmation_due)
+                        if (company.last_accounts_date) setLastAccountsDate(company.last_accounts_date)
+                        if (company.last_confirmation_date) setLastConfirmationDate(company.last_confirmation_date)
+                        setAccountsOverdue(company.accounts_overdue || false)
+                        setConfirmationOverdue(company.confirmation_overdue || false)
                     }
 
                     // Load all data in parallel
