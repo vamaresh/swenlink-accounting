@@ -462,8 +462,12 @@
                     loadS455Alerts();
                 }
                 // Automatically fetch key dates when company has reg number and settings tab is opened
+                // Silent auto-fetch - won't show error alerts
                 if (data.company?.regNumber && !companyRegDate && (activeTab === 'settings' || activeTab === 'alerts')) {
-                    fetchCompanyRegistrationDate().catch(err => console.warn('Auto-fetch key dates failed', err));
+                    fetchCompanyRegistrationDate().catch(err => {
+                        console.warn('Auto-fetch key dates failed (silent):', err.message)
+                        // Don't alert on auto-fetch failures
+                    });
                 }
             }, [data.company?.id, data.company?.regNumber, activeTab]);
 
@@ -499,10 +503,22 @@
 
             // Component-scope helper to fetch Companies House registration date and calculate key dates
             async function fetchCompanyRegistrationDate() {
-                if (!data.company || !data.company.regNumber) return
+                if (!data.company || !data.company.regNumber) {
+                    alert('Please enter a company registration number in Settings first.')
+                    return
+                }
                 try {
                     const resp = await fetch(`/api/companies-house?reg=${encodeURIComponent(data.company.regNumber)}`)
-                    if (!resp.ok) throw new Error('fetch failed')
+                    if (!resp.ok) {
+                        const errData = await resp.json().catch(() => ({}))
+                        if (resp.status === 500 && errData.error?.includes('not configured')) {
+                            throw new Error('Companies House API key not configured. Please contact support.')
+                        } else if (resp.status === 404) {
+                            throw new Error(`Company ${data.company.regNumber} not found. Please check the registration number.`)
+                        } else {
+                            throw new Error(`Failed to fetch (${resp.status}). Please try again later.`)
+                        }
+                    }
                     const j = await resp.json()
                     // companies house responses vary; look for common date fields
                     const dateStr = j && (j.date_of_creation || j.date_registered || j.registered_on || j.creation_date)
@@ -520,6 +536,10 @@
                         due.setMonth(due.getMonth() + 9)
                         due.setDate(due.getDate() + 7)
                         setNextAccountsDue(due.toISOString())
+                        
+                        alert('Key dates fetched successfully from Companies House!')
+                    } else {
+                        throw new Error('Registration date not found in Companies House response.')
                     }
                 } catch (err) {
                     console.warn('Companies House fetch failed', err)
@@ -3411,7 +3431,7 @@
                                                 try { 
                                                     await fetchCompanyRegistrationDate(); 
                                                 } catch(e) { 
-                                                    alert('Failed to fetch registration date. Please check the company registration number.'); 
+                                                    alert(e.message || 'Failed to fetch registration date. Please check the company registration number.'); 
                                                 } 
                                             }}
                                             className="text-sm font-semibold text-purple-600 hover:text-purple-700 underline"
