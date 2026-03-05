@@ -53,7 +53,11 @@ WITH CHECK (
 DROP POLICY IF EXISTS "Users can view their audit logs" ON public.audit_log;
 CREATE POLICY "Users can view their audit logs"
 ON public.audit_log FOR SELECT
-USING (clerk_user_id::text = auth.uid()::text);
+USING (
+  user_id IN (
+    SELECT clerk_user_id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
+  )
+);
 
 DROP POLICY IF EXISTS "System can insert audit logs" ON public.audit_log;
 CREATE POLICY "System can insert audit logs"
@@ -103,7 +107,7 @@ USING (
 DROP POLICY IF EXISTS "Users can view their subscriptions" ON public.user_subscriptions;
 CREATE POLICY "Users can view their subscriptions"
 ON public.user_subscriptions FOR SELECT
-USING (clerk_user_id::text = auth.uid()::text);
+USING (user_id::text = auth.uid()::text);
 
 -- App Daily Metrics
 DROP POLICY IF EXISTS "Users can view app_daily_metrics" ON public.app_daily_metrics;
