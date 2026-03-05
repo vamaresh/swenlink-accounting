@@ -36,7 +36,7 @@ CREATE POLICY "Users can view dla_movements for their companies"
 ON public.dla_movements FOR SELECT
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -45,7 +45,7 @@ CREATE POLICY "Users can insert dla_movements for their companies"
 ON public.dla_movements FOR INSERT
 WITH CHECK (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -53,7 +53,7 @@ WITH CHECK (
 DROP POLICY IF EXISTS "Users can view their audit logs" ON public.audit_log;
 CREATE POLICY "Users can view their audit logs"
 ON public.audit_log FOR SELECT
-USING (user_id = auth.uid());
+USING (clerk_user_id = auth.uid());
 
 DROP POLICY IF EXISTS "System can insert audit logs" ON public.audit_log;
 CREATE POLICY "System can insert audit logs"
@@ -66,7 +66,7 @@ CREATE POLICY "Users can view frs105_account_mapping for their companies"
 ON public.frs105_account_mapping FOR SELECT
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -75,7 +75,7 @@ CREATE POLICY "Users can manage frs105_account_mapping for their companies"
 ON public.frs105_account_mapping FOR ALL
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -85,7 +85,7 @@ CREATE POLICY "Users can manage commitments for their companies"
 ON public.commitments FOR ALL
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -95,7 +95,7 @@ CREATE POLICY "Users can manage guarantees for their companies"
 ON public.guarantees FOR ALL
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -103,7 +103,7 @@ USING (
 DROP POLICY IF EXISTS "Users can view their subscriptions" ON public.user_subscriptions;
 CREATE POLICY "Users can view their subscriptions"
 ON public.user_subscriptions FOR SELECT
-USING (user_id = auth.uid());
+USING (clerk_user_id = auth.uid());
 
 -- App Daily Metrics
 DROP POLICY IF EXISTS "Users can view app_daily_metrics" ON public.app_daily_metrics;
@@ -122,7 +122,7 @@ CREATE POLICY "Users can manage bank_transactions for their companies"
 ON public.bank_transactions FOR ALL
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -130,7 +130,7 @@ USING (
 DROP POLICY IF EXISTS "Users can manage their companies" ON public.companies;
 CREATE POLICY "Users can manage their companies"
 ON public.companies FOR ALL
-USING (user_id = auth.uid());
+USING (clerk_user_id = auth.uid());
 
 -- Directors
 DROP POLICY IF EXISTS "Users can manage directors for their companies" ON public.directors;
@@ -138,7 +138,7 @@ CREATE POLICY "Users can manage directors for their companies"
 ON public.directors FOR ALL
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -148,7 +148,7 @@ CREATE POLICY "Users can manage invoices for their companies"
 ON public.invoices FOR ALL
 USING (
   company_id IN (
-    SELECT id FROM public.companies WHERE user_id = auth.uid()
+    SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()
   )
 );
 
@@ -160,7 +160,7 @@ USING (
   invoice_id IN (
     SELECT i.id FROM public.invoices i
     JOIN public.companies c ON c.id = i.company_id
-    WHERE c.user_id = auth.uid()
+    WHERE c.clerk_user_id = auth.uid()
   )
 );
 
@@ -281,12 +281,12 @@ ALTER TABLE public.chart_of_accounts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage categorization rules for their companies" ON public.bank_categorization_rules;
 CREATE POLICY "Users can manage categorization rules for their companies"
 ON public.bank_categorization_rules FOR ALL
-USING (company_id IN (SELECT id FROM public.companies WHERE user_id = auth.uid()));
+USING (company_id IN (SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()));
 
 DROP POLICY IF EXISTS "Users can manage journal entries for their companies" ON public.journal_entries;
 CREATE POLICY "Users can manage journal entries for their companies"
 ON public.journal_entries FOR ALL
-USING (company_id IN (SELECT id FROM public.companies WHERE user_id = auth.uid()));
+USING (company_id IN (SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()));
 
 DROP POLICY IF EXISTS "Users can view journal entry lines" ON public.journal_entry_lines;
 CREATE POLICY "Users can view journal entry lines"
@@ -295,7 +295,7 @@ USING (
   journal_entry_id IN (
     SELECT je.id FROM public.journal_entries je
     JOIN public.companies c ON c.id = je.company_id
-    WHERE c.user_id = auth.uid()
+    WHERE c.clerk_user_id = auth.uid()
   )
 );
 
@@ -306,14 +306,14 @@ WITH CHECK (
   journal_entry_id IN (
     SELECT je.id FROM public.journal_entries je
     JOIN public.companies c ON c.id = je.company_id
-    WHERE c.user_id = auth.uid()
+    WHERE c.clerk_user_id = auth.uid()
   )
 );
 
 DROP POLICY IF EXISTS "Users can manage chart of accounts for their companies" ON public.chart_of_accounts;
 CREATE POLICY "Users can manage chart of accounts for their companies"
 ON public.chart_of_accounts FOR ALL
-USING (company_id IN (SELECT id FROM public.companies WHERE user_id = auth.uid()));
+USING (company_id IN (SELECT id FROM public.companies WHERE clerk_user_id = auth.uid()));
 
 -- ===================================================================
 -- PART 5: DEFAULT UK CHART OF ACCOUNTS
