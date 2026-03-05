@@ -380,16 +380,10 @@
                 expenses: [],
                 bankAccounts: [],
                 bankTransactions: [],
-                chartOfAccounts: [
-                    { id: 1, code: '1000', name: 'Cash', type: 'Asset', balance: 25000 },
-                    { id: 2, code: '1200', name: 'Accounts Receivable', type: 'Asset', balance: 0 },
-                    { id: 3, code: '2000', name: 'Accounts Payable', type: 'Liability', balance: 0 },
-                    { id: 4, code: '2100', name: 'VAT Payable', type: 'Liability', balance: 0 },
-                    { id: 5, code: '3000', name: 'Capital', type: 'Equity', balance: 25000 },
-                    { id: 6, code: '4000', name: 'Sales Revenue', type: 'Income', balance: 0 },
-                    { id: 7, code: '5000', name: 'Operating Expenses', type: 'Expense', balance: 0 }
-                ],
-                vatReturns: []
+                chartOfAccounts: [],
+                vatReturns: [],
+                categorizationRules: [],
+                journalEntries: []
             });
             const [lineItems, setLineItems] = useState([]);
             // DLA states
@@ -409,6 +403,26 @@
                 const [confirmationOverdue, setConfirmationOverdue] = React.useState(false)
                 const [s455Alerts, setS455Alerts] = React.useState([])
                 const [s455Loading, setS455Loading] = React.useState(false)
+                
+                // Bank reconciliation state
+                const [selectedTransaction, setSelectedTransaction] = React.useState(null)
+                const [showReconcileModal, setShowReconcileModal] = React.useState(false)
+                const [reconcileForm, setReconcileForm] = React.useState({
+                    matched_type: 'unmatched',
+                    matched_invoice_id: '',
+                    notes: '',
+                    account_code: '1000'
+                })
+                const [showRulesModal, setShowRulesModal] = React.useState(false)
+                const [ruleForm, setRuleForm] = React.useState({
+                    rule_name: '',
+                    priority: 0,
+                    match_description_contains: '',
+                    assign_category: '',
+                    assign_account_code: '',
+                    assign_matched_type: 'expense'
+                })
+                const [bankingSubTab, setBankingSubTab] = React.useState('transactions')
 
             useEffect(() => {
                 const initClerk = async () => {
@@ -872,7 +886,8 @@
                         bankAccountsRes,
                         bankTransactionsRes,
                         chartRes,
-                        vatReturnsRes
+                        vatReturnsRes,
+                        rulesRes
                     ] = await Promise.all([
                         supabaseClient.from('customers').select('*'),
                         supabaseClient.from('suppliers').select('*'),
@@ -882,9 +897,10 @@
                         supabaseClient.from('expenses').select('*'),
                         supabaseClient.from('expense_images').select('*'),
                         supabaseClient.from('bank_accounts').select('*'),
-                        supabaseClient.from('bank_transactions').select('*'),
-                        supabaseClient.from('chart_of_accounts').select('*'),
-                        supabaseClient.from('vat_returns').select('*')
+                        supabaseClient.from('bank_transactions').select('*').order('date', { ascending: false }),
+                        supabaseClient.from('chart_of_accounts').select('*').eq('is_active', true).order('account_code'),
+                        supabaseClient.from('vat_returns').select('*'),
+                        supabaseClient.from('bank_categorization_rules').select('*').order('priority', { ascending: false })
                     ]);
 
                     const billImagesMap = groupImagesByReference(billImagesRes.data || [], 'bill_id');
@@ -900,7 +916,8 @@
                         bankAccounts: bankAccountsRes.data || [],
                         bankTransactions: bankTransactionsRes.data || [],
                         chartOfAccounts: chartRes.data || [],
-                        vatReturns: (vatReturnsRes.data || []).map(normalizeVatReturnRecord)
+                        vatReturns: (vatReturnsRes.data || []).map(normalizeVatReturnRecord),
+                        categorizationRules: rulesRes.data || []
                     }));
                 } catch (error) {
                     console.error('Error loading data:', error);
@@ -2032,6 +2049,153 @@
                 }
                 result.push(current.trim());
                 return result;
+            };
+            
+            // Auto-categorize transactions using rules
+            const autoCategorizeTransactions = async () => {
+                try {
+                    await ensureSupabaseToken();
+                    const { data: results, error } = await supabaseClient
+                        .rpc('app.auto_categorize_transactions', {
+                            p_company_id: data.company?.id
+                        });
+                    
+                    if (error) throw error;
+                    
+                    // Reload transactions to show updated categories
+                    const { data: updated } = await supabaseClient
+                        .from('bank_transactions')
+                        .select('*')
+                        .eq('company_id', data.company?.id);
+                    
+                    setData(prev => ({ ...prev, bankTransactions: updated || [] }));
+                    alert(`Successfully categorized ${results?.length || 0} transactions!`);
+                } catch (error) {
+                    console.error('Auto-categorize error:', error);
+                    alert('Error auto-categorizing: ' + error.message);
+                }
+            };
+            
+            // Open reconciliation modal for a transaction
+            const openReconcileModal = (transaction) => {
+                setSelectedTransaction(transaction);
+                setReconcileForm({
+                    matched_type: transaction.matched_type || 'unmatched',
+                    matched_invoice_id: transaction.matched_invoice_id || '',
+                    notes: transaction.notes || '',
+                    account_code: transaction.suggested_category || '1000'
+                });
+                setShowReconcileModal(true);
+            };
+            
+            // Reconcile a transaction
+            const reconcileTransaction = async () => {
+                try {
+                    await ensureSupabaseToken();
+                    
+                    // First, reconcile the transaction
+                    const { error: reconcileError } = await supabaseClient.rpc('app.reconcile_bank_transaction', {
+                        p_transaction_id: selectedTransaction.id,
+                        p_company_id: data.company?.id,
+                        p_matched_invoice_id: reconcileForm.matched_invoice_id || null,
+                        p_matched_type: reconcileForm.matched_type,
+                        p_notes: reconcileForm.notes,
+                        p_user_id: user?.primaryEmailAddress?.emailAddress || user?.email
+                    });
+                    
+                    if (reconcileError) throw reconcileError;
+                    
+                    // If account code provided, create journal entry
+                    if (reconcileForm.account_code) {
+                        const { error: journalError } = await supabaseClient.rpc('app.create_journal_entry_from_bank_transaction', {
+                            p_transaction_id: selectedTransaction.id,
+                            p_company_id: data.company?.id,
+                            p_account_code: reconcileForm.account_code,
+                            p_user_id: user?.primaryEmailAddress?.emailAddress || user?.email
+                        });
+                        
+                        if (journalError) throw journalError;
+                    }
+                    
+                    // Reload transactions
+                    const { data: updated } = await supabaseClient
+                        .from('bank_transactions')
+                        .select('*')
+                        .eq('company_id', data.company?.id);
+                    
+                    setData(prev => ({ ...prev, bankTransactions: updated || [] }));
+                    setShowReconcileModal(false);
+                    alert('Transaction reconciled successfully!');
+                } catch (error) {
+                    console.error('Reconcile error:', error);
+                    alert('Error reconciling: ' + error.message);
+                }
+            };
+            
+            // Add categorization rule
+            const addCategorizationRule = async () => {
+                try {
+                    await ensureSupabaseToken();
+                    const { error } = await supabaseClient
+                        .from('bank_categorization_rules')
+                        .insert({
+                            company_id: data.company?.id,
+                            rule_name: ruleForm.rule_name,
+                            priority: parseInt(ruleForm.priority) || 0,
+                            match_description_contains: ruleForm.match_description_contains || null,
+                            assign_category: ruleForm.assign_category,
+                            assign_account_code: ruleForm.assign_account_code || null,
+                            assign_matched_type: ruleForm.assign_matched_type,
+                            enabled: true,
+                            created_by: user?.primaryEmailAddress?.emailAddress || user?.email
+                        });
+                    
+                    if (error) throw error;
+                    
+                    // Reload rules
+                    const { data: rules } = await supabaseClient
+                        .from('bank_categorization_rules')
+                        .select('*')
+                        .eq('company_id', data.company?.id)
+                        .order('priority', { ascending: false });
+                    
+                    setData(prev => ({ ...prev, categorizationRules: rules || [] }));
+                    setShowRulesModal(false);
+                    setRuleForm({
+                        rule_name: '',
+                        priority: 0,
+                        match_description_contains: '',
+                        assign_category: '',
+                        assign_account_code: '',
+                        assign_matched_type: 'expense'
+                    });
+                    alert('Rule added successfully!');
+                } catch (error) {
+                    console.error('Add rule error:', error);
+                    alert('Error adding rule: ' + error.message);
+                }
+            };
+            
+            // Delete categorization rule
+            const deleteRule = async (ruleId) => {
+                if (!confirm('Delete this categorization rule?')) return;
+                try {
+                    await ensureSupabaseToken();
+                    const { error } = await supabaseClient
+                        .from('bank_categorization_rules')
+                        .delete()
+                        .eq('id', ruleId);
+                    
+                    if (error) throw error;
+                    
+                    setData(prev => ({
+                        ...prev,
+                        categorizationRules: prev.categorizationRules.filter(r => r.id !== ruleId)
+                    }));
+                } catch (error) {
+                    console.error('Delete rule error:', error);
+                    alert('Error deleting rule: ' + error.message);
+                }
             };
 
             const exportData = () => {
@@ -3327,6 +3491,166 @@
                                         </div>
                                     </div>
                                 )}
+                                
+                                {showReconcileModal && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-black opacity-40" onClick={() => setShowReconcileModal(false)} />
+                                        <div className="bg-white rounded-lg p-6 z-10 w-full max-w-lg">
+                                            <h3 className="text-lg font-semibold mb-3">Reconcile Transaction</h3>
+                                            {selectedTransaction && (
+                                                <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-4 text-sm">
+                                                    <p><strong>{selectedTransaction.description}</strong></p>
+                                                    <p className="text-gray-600">{new Date(selectedTransaction.date).toLocaleDateString('en-GB')}</p>
+                                                    <p className="text-lg font-bold mt-2">
+                                                        {selectedTransaction.paid_in > 0 ? `+£${selectedTransaction.paid_in}` : `-£${selectedTransaction.paid_out}`}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            <form onSubmit={(e) => { e.preventDefault(); reconcileTransaction(); }}>
+                                                <label className="block text-sm text-gray-700">Transaction Type</label>
+                                                <select 
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={reconcileForm.matched_type} 
+                                                    onChange={e => setReconcileForm(prev => ({ ...prev, matched_type: e.target.value }))}>
+                                                    <option value="unmatched">Unmatched</option>
+                                                    <option value="invoice">Match to Invoice</option>
+                                                    <option value="bill">Match to Bill</option>
+                                                    <option value="expense">Expense</option>
+                                                    <option value="transfer">Internal Transfer</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                                
+                                                {reconcileForm.matched_type === 'invoice' && (
+                                                    <>
+                                                        <label className="block text-sm text-gray-700">Select Invoice</label>
+                                                        <select 
+                                                            className="w-full p-2 border rounded mb-3" 
+                                                            value={reconcileForm.matched_invoice_id} 
+                                                            onChange={e => setReconcileForm(prev => ({ ...prev, matched_invoice_id: e.target.value }))}>
+                                                            <option value="">Select invoice...</option>
+                                                            {data.invoices.filter(inv => inv.status !== 'paid').map(inv => (
+                                                                <option key={inv.id} value={inv.id}>
+                                                                    {inv.invoiceNumber} - {data.customers.find(c => c.id === inv.customerId)?.name} - £{inv.total}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </>
+                                                )}
+                                                
+                                                <label className="block text-sm text-gray-700">Account Code</label>
+                                                <select 
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={reconcileForm.account_code} 
+                                                    onChange={e => setReconcileForm(prev => ({ ...prev, account_code: e.target.value }))}>
+                                                    <option value="">Select account...</option>
+                                                    {data.chartOfAccounts.map(acc => (
+                                                        <option key={acc.id} value={acc.account_code}>
+                                                            {acc.account_code} - {acc.account_name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                
+                                                <label className="block text-sm text-gray-700">Notes</label>
+                                                <textarea 
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={reconcileForm.notes} 
+                                                    onChange={e => setReconcileForm(prev => ({ ...prev, notes: e.target.value }))} 
+                                                    placeholder="Optional notes about this reconciliation..."
+                                                />
+                                                
+                                                <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-4 text-xs">
+                                                    <p><strong>What happens:</strong> Transaction marked as reconciled, journal entry created to update general ledger.</p>
+                                                </div>
+                                                
+                                                <div className="flex gap-3 justify-end">
+                                                    <button type="button" onClick={() => setShowReconcileModal(false)} className="px-4 py-2 rounded bg-gray-200">Cancel</button>
+                                                    <button type="submit" className="px-4 py-2 rounded bg-green-600 text-white">Reconcile</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {showRulesModal && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-black opacity-40" onClick={() => setShowRulesModal(false)} />
+                                        <div className="bg-white rounded-lg p-6 z-10 w-full max-w-lg">
+                                            <h3 className="text-lg font-semibold mb-3">Add Categorization Rule</h3>
+                                            <form onSubmit={(e) => { e.preventDefault(); addCategorizationRule(); }}>
+                                                <label className="block text-sm text-gray-700">Rule Name</label>
+                                                <input 
+                                                    type="text"
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={ruleForm.rule_name} 
+                                                    onChange={e => setRuleForm(prev => ({ ...prev, rule_name: e.target.value }))} 
+                                                    placeholder="e.g., Rent Payments, Salaries, AWS Charges"
+                                                    required
+                                                />
+                                                
+                                                <label className="block text-sm text-gray-700">Priority (higher runs first)</label>
+                                                <input 
+                                                    type="number"
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={ruleForm.priority} 
+                                                    onChange={e => setRuleForm(prev => ({ ...prev, priority: e.target.value }))} 
+                                                />
+                                                
+                                                <label className="block text-sm text-gray-700">Match Description Contains</label>
+                                                <input 
+                                                    type="text"
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={ruleForm.match_description_contains} 
+                                                    onChange={e => setRuleForm(prev => ({ ...prev, match_description_contains: e.target.value }))} 
+                                                    placeholder="e.g., AMAZON, LANDLORD NAME, SALARY"
+                                                />
+                                                
+                                                <label className="block text-sm text-gray-700">Assign Category</label>
+                                                <input 
+                                                    type="text"
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={ruleForm.assign_category} 
+                                                    onChange={e => setRuleForm(prev => ({ ...prev, assign_category: e.target.value }))} 
+                                                    placeholder="e.g., Rent, Software, Salaries"
+                                                    required
+                                                />
+                                                
+                                                <label className="block text-sm text-gray-700">Assign Account Code</label>
+                                                <select 
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={ruleForm.assign_account_code} 
+                                                    onChange={e => setRuleForm(prev => ({ ...prev, assign_account_code: e.target.value }))}>
+                                                    <option value="">Select account code...</option>
+                                                    {data.chartOfAccounts.map(acc => (
+                                                        <option key={acc.id} value={acc.account_code}>
+                                                            {acc.account_code} - {acc.account_name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                
+                                                <label className="block text-sm text-gray-700">Transaction Type</label>
+                                                <select 
+                                                    className="w-full p-2 border rounded mb-3" 
+                                                    value={ruleForm.assign_matched_type} 
+                                                    onChange={e => setRuleForm(prev => ({ ...prev, assign_matched_type: e.target.value }))}>
+                                                    <option value="expense">Expense</option>
+                                                    <option value="invoice">Invoice Payment</option>
+                                                    <option value="bill">Bill Payment</option>
+                                                    <option value="transfer">Transfer</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                                
+                                                <div className="bg-purple-50 border border-purple-200 rounded p-2 mb-4 text-xs">
+                                                    <p><strong>How it works:</strong> When you click "Auto-Categorize", all uncategorized transactions are checked against your rules. Matches are suggested with a confidence score.</p>
+                                                </div>
+                                                
+                                                <div className="flex gap-3 justify-end">
+                                                    <button type="button" onClick={() => setShowRulesModal(false)} className="px-4 py-2 rounded bg-gray-200">Cancel</button>
+                                                    <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white">Add Rule</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -4050,99 +4374,262 @@
                             <div className="space-y-6">
                                 <div className="bg-white rounded-lg shadow p-6">
                                     <div className="flex justify-between items-center mb-6">
-                                        <h2 className="text-2xl font-bold">Bank Accounts</h2>
-                                        <button onClick={() => openModal('bankAccount')} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                                            <Icon name="Plus" className="w-5 h-5" />
-                                            Add Bank Account
-                                        </button>
+                                        <h2 className="text-2xl font-bold">Banking</h2>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => setBankingSubTab('transactions')} 
+                                                className={`px-4 py-2 rounded ${bankingSubTab === 'transactions' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                Transactions
+                                            </button>
+                                            <button 
+                                                onClick={() => setBankingSubTab('rules')} 
+                                                className={`px-4 py-2 rounded ${bankingSubTab === 'rules' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                Rules
+                                            </button>
+                                            <button 
+                                                onClick={() => setBankingSubTab('accounts')} 
+                                                className={`px-4 py-2 rounded ${bankingSubTab === 'accounts' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                Bank Accounts
+                                            </button>
+                                            <button 
+                                                onClick={() => setBankingSubTab('chart')} 
+                                                className={`px-4 py-2 rounded ${bankingSubTab === 'chart' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                Chart of Accounts
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {data.bankAccounts.length === 0 ? (
-                                            <div className="col-span-full text-center py-8 text-gray-500">No bank accounts yet. Add your first account!</div>
-                                        ) : data.bankAccounts.map(account => (
-                                            <div key={account.id} className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <h3 className="font-bold text-lg">{account.name}</h3>
-                                                    <div className="flex gap-1">
-                                                        <button onClick={() => openModal('bankAccount', account)} className="text-blue-600 hover:text-blue-800">
-                                                            <Icon name="Edit2" className="w-4 h-4" />
-                                                        </button>
-                                                        <button onClick={() => handleDelete('bankAccount', account.id)} className="text-red-600 hover:text-red-800">
-                                                            <Icon name="Trash2" className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <p className="text-sm text-gray-600">{account.bank}</p>
-                                                {account.accountNumber && <p className="text-xs text-gray-500 font-mono">ACC: {account.accountNumber}</p>}
-                                                {account.sortCode && <p className="text-xs text-gray-500 font-mono">Sort: {account.sortCode}</p>}
-                                                <div className="mt-3 pt-3 border-t border-blue-200">
-                                                    <p className="text-2xl font-bold text-blue-700">{account.currency} {account.balance.toLocaleString()}</p>
-                                                    <p className="text-xs text-gray-600">Current Balance</p>
+                                    
+                                    {bankingSubTab === 'transactions' && (
+                                        <>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="text-xl font-semibold">Bank Transactions</h3>
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        onClick={autoCategorizeTransactions}
+                                                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                                        <Icon name="Zap" className="w-5 h-5" />
+                                                        Auto-Categorize
+                                                    </button>
+                                                    <label className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
+                                                        <Icon name="Upload" className="w-5 h-5" />
+                                                        Import from Tide
+                                                        <input type="file" accept=".csv" onChange={importBankCSV} className="hidden" />
+                                                    </label>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="bg-white rounded-lg shadow p-6">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h2 className="text-2xl font-bold">Import Transactions</h2>
-                                        <label className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-                                            <Icon name="Upload" className="w-5 h-5" />
-                                            Import CSV from Tide
-                                            <input type="file" accept=".csv" onChange={importBankCSV} className="hidden" />
-                                        </label>
-                                    </div>
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                                        <p className="text-sm text-gray-700"><strong>Tide Bank CSV Import:</strong> Login to Tide → Accounts → Export → Download CSV with all columns</p>
-                                        <p className="text-sm text-gray-600 mt-1">The system will automatically import all transaction details including categories, parties, and payment types.</p>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left text-xs font-semibold">Date</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-semibold">Description</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-semibold">From/To</th>
-                                                    <th className="px-3 py-2 text-left text-xs font-semibold">Category</th>
-                                                    <th className="px-3 py-2 text-right text-xs font-semibold">Paid In</th>
-                                                    <th className="px-3 py-2 text-right text-xs font-semibold">Paid Out</th>
-                                                    <th className="px-3 py-2 text-center text-xs font-semibold">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {data.bankTransactions?.length === 0 || !data.bankTransactions ? (
-                                                    <tr><td colSpan="7" className="text-center py-8 text-gray-500">No transactions imported yet. Upload a Tide CSV to get started.</td></tr>
-                                                ) : data.bankTransactions.map(txn => (
-                                                    <tr key={txn.id} className="border-t hover:bg-gray-50">
-                                                        <td className="px-3 py-2 text-xs">{new Date(txn.date).toLocaleDateString('en-GB')}</td>
-                                                        <td className="px-3 py-2 text-xs">
-                                                            <div className="font-medium">{txn.description}</div>
-                                                            {txn.reference && <div className="text-gray-500 text-xs">{txn.reference}</div>}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-xs">
-                                                            {txn.from_party && <div className="text-gray-600">From: {txn.from_party}</div>}
-                                                            {txn.to_party && <div className="text-gray-600">To: {txn.to_party}</div>}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-xs">
-                                                            <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs">{txn.category || 'Uncategorized'}</span>
-                                                        </td>
-                                                        <td className="px-3 py-2 text-xs text-right font-semibold text-green-600">
-                                                            {txn.paid_in > 0 ? `£${txn.paid_in.toLocaleString()}` : '—'}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-xs text-right font-semibold text-red-600">
-                                                            {txn.paid_out > 0 ? `£${txn.paid_out.toLocaleString()}` : '—'}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-center">
-                                                            <span className={`inline-block px-2 py-1 rounded text-xs ${txn.status === 'Cleared' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                                {txn.status || 'Unknown'}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
+                                            
+                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm">
+                                                <p><strong>Bank Reconciliation:</strong> Match transactions to invoices/bills, categorize by account codes, and create journal entries.</p>
+                                                <p className="mt-1">✅ Reconciled: {data.bankTransactions.filter(t => t.reconciled).length} | ⏳ Pending: {data.bankTransactions.filter(t => !t.reconciled).length}</p>
+                                            </div>
+                                            
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Date</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Description</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Category</th>
+                                                            <th className="px-3 py-2 text-right text-xs font-semibold">Paid In</th>
+                                                            <th className="px-3 py-2 text-right text-xs font-semibold">Paid Out</th>
+                                                            <th className="px-3 py-2 text-center text-xs font-semibold">Status</th>
+                                                            <th className="px-3 py-2 text-center text-xs font-semibold">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {data.bankTransactions?.length === 0 ? (
+                                                            <tr><td colSpan="7" className="text-center py-8 text-gray-500">No transactions. Import from Tide to get started.</td></tr>
+                                                        ) : data.bankTransactions.map(txn => (
+                                                            <tr key={txn.id} className={`border-t hover:bg-gray-50 ${txn.reconciled ? 'bg-green-50' : ''}`}>
+                                                                <td className="px-3 py-2 text-xs">{new Date(txn.date).toLocaleDateString('en-GB')}</td>
+                                                                <td className="px-3 py-2 text-xs">
+                                                                    <div className="font-medium">{txn.description}</div>
+                                                                    {txn.reference && <div className="text-gray-500 text-xs">{txn.reference}</div>}
+                                                                    {txn.confidence_score && <div className="text-xs text-purple-600">Confidence: {txn.confidence_score}%</div>}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-xs">
+                                                                    <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs">
+                                                                        {txn.suggested_category || txn.category || 'Uncategorized'}
+                                                                    </span>
+                                                                    {txn.matched_type && txn.matched_type !== 'unmatched' && (
+                                                                        <div className="text-xs text-blue-600 mt-1">{txn.matched_type}</div>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-xs text-right font-semibold text-green-600">
+                                                                    {txn.paid_in > 0 ? `£${txn.paid_in.toLocaleString()}` : '—'}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-xs text-right font-semibold text-red-600">
+                                                                    {txn.paid_out > 0 ? `£${txn.paid_out.toLocaleString()}` : '—'}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    {txn.reconciled ? (
+                                                                        <span className="inline-block px-2 py-1 rounded text-xs bg-green-100 text-green-700">
+                                                                            ✓ Reconciled
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="inline-block px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-700">
+                                                                            Pending
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    {!txn.reconciled && (
+                                                                        <button 
+                                                                            onClick={() => openReconcileModal(txn)}
+                                                                            className="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                                                            Reconcile
+                                                                        </button>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </>
+                                    )}
+                                    
+                                    {bankingSubTab === 'rules' && (
+                                        <>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="text-xl font-semibold">Categorization Rules</h3>
+                                                <button 
+                                                    onClick={() => setShowRulesModal(true)}
+                                                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                                    <Icon name="Plus" className="w-5 h-5" />
+                                                    Add Rule
+                                                </button>
+                                            </div>
+                                            
+                                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm">
+                                                <p><strong>Smart Categorization:</strong> Rules automatically match transactions to categories based on description, parties, amounts, etc.</p>
+                                                <p className="mt-1">Higher priority rules are applied first. Click "Auto-Categorize" in Transactions tab to apply rules.</p>
+                                            </div>
+                                            
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Priority</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Rule Name</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Match Condition</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Category</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Account Code</th>
+                                                            <th className="px-3 py-2 text-center text-xs font-semibold">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {data.categorizationRules?.length === 0 ? (
+                                                            <tr><td colSpan="6" className="text-center py-8 text-gray-500">No rules yet. Add your first rule!</td></tr>
+                                                        ) : data.categorizationRules.map(rule => (
+                                                            <tr key={rule.id} className="border-t hover:bg-gray-50">
+                                                                <td className="px-3 py-2 text-xs font-semibold">{rule.priority}</td>
+                                                                <td className="px-3 py-2 text-xs font-medium">{rule.rule_name}</td>
+                                                                <td className="px-3 py-2 text-xs text-gray-600">
+                                                                    {rule.match_description_contains && `Description contains "${rule.match_description_contains}"`}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-xs">
+                                                                    <span className="inline-block px-2 py-1 bg-blue-100 rounded">{rule.assign_category}</span>
+                                                                </td>
+                                                                <td className="px-3 py-2 text-xs font-mono">{rule.assign_account_code || '—'}</td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <button 
+                                                                        onClick={() => deleteRule(rule.id)}
+                                                                        className="text-red-600 hover:text-red-800">
+                                                                        <Icon name="Trash2" className="w-4 h-4" />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </>
+                                    )}
+                                    
+                                    {bankingSubTab === 'accounts' && (
+                                        <>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="text-xl font-semibold">Bank Accounts</h3>
+                                                <button onClick={() => openModal('bankAccount')} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                                    <Icon name="Plus" className="w-5 h-5" />
+                                                    Add Bank Account
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {data.bankAccounts.length === 0 ? (
+                                                    <div className="col-span-full text-center py-8 text-gray-500">No bank accounts yet. Add your first account!</div>
+                                                ) : data.bankAccounts.map(account => (
+                                                    <div key={account.id} className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <h3 className="font-bold text-lg">{account.name}</h3>
+                                                            <div className="flex gap-1">
+                                                                <button onClick={() => openModal('bankAccount', account)} className="text-blue-600 hover:text-blue-800">
+                                                                    <Icon name="Edit2" className="w-4 h-4" />
+                                                                </button>
+                                                                <button onClick={() => handleDelete('bankAccount', account.id)} className="text-red-600 hover:text-red-800">
+                                                                    <Icon name="Trash2" className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600">{account.bank}</p>
+                                                        {account.accountNumber && <p className="text-xs text-gray-500 font-mono">ACC: {account.accountNumber}</p>}
+                                                        {account.sortCode && <p className="text-xs text-gray-500 font-mono">Sort: {account.sortCode}</p>}
+                                                        <div className="mt-3 pt-3 border-t border-blue-200">
+                                                            <p className="text-2xl font-bold text-blue-700">{account.currency} {account.balance.toLocaleString()}</p>
+                                                            <p className="text-xs text-gray-600">Current Balance</p>
+                                                        </div>
+                                                    </div>
                                                 ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                            </div>
+                                        </>
+                                    )}
+                                    
+                                    {bankingSubTab === 'chart' && (
+                                        <>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="text-xl font-semibold">Chart of Accounts</h3>
+                                                <p className="text-sm text-gray-600">Standard UK accounting codes with FRS 105 mapping</p>
+                                            </div>
+                                            
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Code</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Account Name</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Type</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">FRS 105 Tag</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Description</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {data.chartOfAccounts?.length === 0 ? (
+                                                            <tr><td colSpan="5" className="text-center py-8 text-gray-500">No accounts yet. Run migration to create default chart.</td></tr>
+                                                        ) : data.chartOfAccounts.map(account => (
+                                                            <tr key={account.id} className="border-t hover:bg-gray-50">
+                                                                <td className="px-3 py-2 text-xs font-mono font-semibold">{account.account_code}</td>
+                                                                <td className="px-3 py-2 text-xs font-medium">{account.account_name}</td>
+                                                                <td className="px-3 py-2 text-xs">
+                                                                    <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                                                        account.account_type === 'asset' ? 'bg-green-100 text-green-700' :
+                                                                        account.account_type === 'liability' ? 'bg-red-100 text-red-700' :
+                                                                        account.account_type === 'equity' ? 'bg-purple-100 text-purple-700' :
+                                                                        account.account_type === 'revenue' ? 'bg-blue-100 text-blue-700' :
+                                                                        'bg-orange-100 text-orange-700'
+                                                                    }`}>
+                                                                        {account.account_type}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-3 py-2 text-xs text-gray-600">{account.frs105_tag || '—'}</td>
+                                                                <td className="px-3 py-2 text-xs text-gray-600">{account.description || '—'}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         )}
