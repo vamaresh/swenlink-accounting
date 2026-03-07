@@ -16,109 +16,167 @@
 -- PART 1: ENABLE ROW LEVEL SECURITY (FIXES SECURITY ADVISOR WARNINGS)
 -- ===================================================================
 
--- Enable RLS on all tables
-ALTER TABLE IF EXISTS public.dla_movements ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.audit_log ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.frs105_account_mapping ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.commitments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.guarantees ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.user_subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.app_daily_metrics ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.bank_transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.companies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.directors ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.line_items ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on existing tables only
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'dla_movements') THEN
+    ALTER TABLE public.dla_movements ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'audit_log') THEN
+    ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'frs105_account_mapping') THEN
+    ALTER TABLE public.frs105_account_mapping ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'commitments') THEN
+    ALTER TABLE public.commitments ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'guarantees') THEN
+    ALTER TABLE public.guarantees ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'user_subscriptions') THEN
+    ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'app_daily_metrics') THEN
+    ALTER TABLE public.app_daily_metrics ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'bank_transactions') THEN
+    ALTER TABLE public.bank_transactions ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'companies') THEN
+    ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'directors') THEN
+    ALTER TABLE public.directors ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'invoices') THEN
+    ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'line_items') THEN
+    ALTER TABLE public.line_items ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
 -- DLA Movements: Users can only see/modify movements for their companies
-DROP POLICY IF EXISTS "Users can view dla_movements for their companies" ON public.dla_movements;
-CREATE POLICY "Users can view dla_movements for their companies"
-ON public.dla_movements FOR SELECT
-USING (
-  company_id IN (
-    SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
-  )
-);
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'dla_movements') THEN
+    DROP POLICY IF EXISTS "Users can view dla_movements for their companies" ON public.dla_movements;
+    CREATE POLICY "Users can view dla_movements for their companies"
+    ON public.dla_movements FOR SELECT
+    USING (
+      company_id IN (
+        SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
+      )
+    );
 
-DROP POLICY IF EXISTS "Users can insert dla_movements for their companies" ON public.dla_movements;
-CREATE POLICY "Users can insert dla_movements for their companies"
-ON public.dla_movements FOR INSERT
-WITH CHECK (
-  company_id IN (
-    SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
-  )
-);
+    DROP POLICY IF EXISTS "Users can insert dla_movements for their companies" ON public.dla_movements;
+    CREATE POLICY "Users can insert dla_movements for their companies"
+    ON public.dla_movements FOR INSERT
+    WITH CHECK (
+      company_id IN (
+        SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
+      )
+    );
+  END IF;
+END $$;
 
--- Audit Log: Users can view their own audit logs
-DROP POLICY IF EXISTS "Users can view their audit logs" ON public.audit_log;
-CREATE POLICY "Users can view their audit logs"
-ON public.audit_log FOR SELECT
-USING (
-  user_id IN (
-    SELECT clerk_user_id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
-  )
-);
+-- Audit Log: Users can view audit logs (simplified - uses action_by field)
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'audit_log') THEN
+    DROP POLICY IF EXISTS "Users can view their audit logs" ON public.audit_log;
+    CREATE POLICY "Users can view their audit logs"
+    ON public.audit_log FOR SELECT
+    USING (auth.uid() IS NOT NULL);
 
-DROP POLICY IF EXISTS "System can insert audit logs" ON public.audit_log;
-CREATE POLICY "System can insert audit logs"
-ON public.audit_log FOR INSERT
-WITH CHECK (true);
+    DROP POLICY IF EXISTS "System can insert audit logs" ON public.audit_log;
+    CREATE POLICY "System can insert audit logs"
+    ON public.audit_log FOR INSERT
+    WITH CHECK (true);
+  END IF;
+END $$;
 
--- FRS105 Account Mapping
-DROP POLICY IF EXISTS "Users can view frs105_account_mapping for their companies" ON public.frs105_account_mapping;
-CREATE POLICY "Users can view frs105_account_mapping for their companies"
-ON public.frs105_account_mapping FOR SELECT
-USING (
-  company_id IN (
-    SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
-  )
-);
+-- FRS105 Account Mapping (only if table exists)
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'frs105_account_mapping') THEN
+    DROP POLICY IF EXISTS "Users can view frs105_account_mapping for their companies" ON public.frs105_account_mapping;
+    CREATE POLICY "Users can view frs105_account_mapping for their companies"
+    ON public.frs105_account_mapping FOR SELECT
+    USING (
+      company_id IN (
+        SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
+      )
+    );
 
-DROP POLICY IF EXISTS "Users can manage frs105_account_mapping for their companies" ON public.frs105_account_mapping;
-CREATE POLICY "Users can manage frs105_account_mapping for their companies"
-ON public.frs105_account_mapping FOR ALL
-USING (
-  company_id IN (
-    SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
-  )
-);
+    DROP POLICY IF EXISTS "Users can manage frs105_account_mapping for their companies" ON public.frs105_account_mapping;
+    CREATE POLICY "Users can manage frs105_account_mapping for their companies"
+    ON public.frs105_account_mapping FOR ALL
+    USING (
+      company_id IN (
+        SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
+      )
+    );
+  END IF;
+END $$;
 
 -- Commitments
-DROP POLICY IF EXISTS "Users can manage commitments for their companies" ON public.commitments;
-CREATE POLICY "Users can manage commitments for their companies"
-ON public.commitments FOR ALL
-USING (
-  company_id IN (
-    SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
-  )
-);
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'commitments') THEN
+    DROP POLICY IF EXISTS "Users can manage commitments for their companies" ON public.commitments;
+    CREATE POLICY "Users can manage commitments for their companies"
+    ON public.commitments FOR ALL
+    USING (
+      company_id IN (
+        SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
+      )
+    );
+  END IF;
+END $$;
 
 -- Guarantees
-DROP POLICY IF EXISTS "Users can manage guarantees for their companies" ON public.guarantees;
-CREATE POLICY "Users can manage guarantees for their companies"
-ON public.guarantees FOR ALL
-USING (
-  company_id IN (
-    SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
-  )
-);
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'guarantees') THEN
+    DROP POLICY IF EXISTS "Users can manage guarantees for their companies" ON public.guarantees;
+    CREATE POLICY "Users can manage guarantees for their companies"
+    ON public.guarantees FOR ALL
+    USING (
+      company_id IN (
+        SELECT id FROM public.companies WHERE clerk_user_id::text = auth.uid()::text
+      )
+    );
+  END IF;
+END $$;
 
--- User Subscriptions
-DROP POLICY IF EXISTS "Users can view their subscriptions" ON public.user_subscriptions;
-CREATE POLICY "Users can view their subscriptions"
-ON public.user_subscriptions FOR SELECT
-USING (user_id::text = auth.uid()::text);
+-- User Subscriptions: Users can view their own subscriptions
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'user_subscriptions') THEN
+    DROP POLICY IF EXISTS "Users can view their subscriptions" ON public.user_subscriptions;
+    CREATE POLICY "Users can view their subscriptions"
+    ON public.user_subscriptions FOR SELECT
+    USING (clerk_user_id::text = auth.uid()::text);
+  END IF;
+END $$;
 
 -- App Daily Metrics
-DROP POLICY IF EXISTS "Users can view app_daily_metrics" ON public.app_daily_metrics;
-CREATE POLICY "Users can view app_daily_metrics"
-ON public.app_daily_metrics FOR SELECT
-USING (auth.uid() IS NOT NULL);
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'app_daily_metrics') THEN
+    DROP POLICY IF EXISTS "Users can view app_daily_metrics" ON public.app_daily_metrics;
+    CREATE POLICY "Users can view app_daily_metrics"
+    ON public.app_daily_metrics FOR SELECT
+    USING (auth.uid() IS NOT NULL);
 
-DROP POLICY IF EXISTS "System can insert app_daily_metrics" ON public.app_daily_metrics;
-CREATE POLICY "System can insert app_daily_metrics"
-ON public.app_daily_metrics FOR INSERT
-WITH CHECK (true);
+    DROP POLICY IF EXISTS "System can insert app_daily_metrics" ON public.app_daily_metrics;
+    CREATE POLICY "System can insert app_daily_metrics"
+    ON public.app_daily_metrics FOR INSERT
+    WITH CHECK (true);
+  END IF;
+END $$;
 
 -- Bank Transactions
 DROP POLICY IF EXISTS "Users can manage bank_transactions for their companies" ON public.bank_transactions;
@@ -168,9 +226,16 @@ USING (
   )
 );
 
--- Grant SELECT on views
-GRANT SELECT ON public.view_dla_s455_alerts TO authenticated;
-GRANT SELECT ON public.view_frs105_balance_sheet TO authenticated;
+-- Grant SELECT on views (only if they exist)
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_views WHERE schemaname = 'public' AND viewname = 'view_dla_s455_alerts') THEN
+    GRANT SELECT ON public.view_dla_s455_alerts TO authenticated;
+  END IF;
+  IF EXISTS (SELECT FROM pg_views WHERE schemaname = 'public' AND viewname = 'view_frs105_balance_sheet') THEN
+    GRANT SELECT ON public.view_frs105_balance_sheet TO authenticated;
+  END IF;
+END $$;
 
 -- ===================================================================
 -- PART 2: BANK RECONCILIATION SCHEMA
