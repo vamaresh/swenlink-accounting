@@ -443,6 +443,7 @@
                     assign_matched_type: 'expense'
                 })
                 const [bankingSubTab, setBankingSubTab] = React.useState('transactions')
+                const [isExtractingBill, setIsExtractingBill] = React.useState(false)
 
             useEffect(() => {
                 const initClerk = async () => {
@@ -1058,6 +1059,73 @@
 
                     const images = formData.images || [];
                     setFormData({...formData, images: [...images, publicUrl]});
+                } catch (error) {
+                    console.error('Error uploading image:', error);
+                    alert('Failed to upload image');
+                }
+            };
+
+            const handleBillImageUpload = async (e) => {
+                const file = e.target.files[0];
+                if (!file || !(file.type.startsWith('image/') || file.type === 'application/pdf')) return;
+
+                try {
+                    await ensureSupabaseToken(true);
+                    const fileName = `${user.id}/${Date.now()}-${file.name}`;
+                    const { data: uploadData, error } = await supabaseClient.storage
+                        .from('bill-images')
+                        .upload(fileName, file);
+
+                    if (error) {
+                        console.error('Error uploading image:', error);
+                        alert('Failed to upload image');
+                        return;
+                    }
+
+                    const { data: { publicUrl } } = supabaseClient.storage
+                        .from('bill-images')
+                        .getPublicUrl(fileName);
+
+                    const images = formData.images || [];
+                    setFormData(prev => ({...prev, images: [...images, publicUrl]}));
+
+                    // AI auto-extract only for images (not PDFs)
+                    if (file.type.startsWith('image/')) {
+                        setIsExtractingBill(true);
+                        try {
+                            const res = await fetch('/api/extract_bill', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ imageUrl: publicUrl })
+                            });
+                            if (res.ok) {
+                                const extracted = await res.json();
+                                const updates = {};
+                                if (extracted.billNumber) updates.billNumber = extracted.billNumber;
+                                if (extracted.date) updates.date = extracted.date;
+                                if (extracted.dueDate) updates.dueDate = extracted.dueDate;
+                                if (extracted.subtotal != null && extracted.subtotal !== '') updates.subtotal = String(extracted.subtotal);
+                                if (extracted.vatRate != null && extracted.vatRate !== '') updates.vatRate = String(extracted.vatRate);
+                                if (extracted.vatAmount != null && extracted.vatAmount !== '') updates.vat = String(extracted.vatAmount);
+                                if (extracted.total != null && extracted.total !== '') updates.total = String(extracted.total);
+                                if (extracted.description) updates.description = extracted.description;
+                                // Try to match supplier name to existing supplier
+                                if (extracted.supplierName && data.suppliers) {
+                                    const nameLower = extracted.supplierName.toLowerCase();
+                                    const match = data.suppliers.find(s =>
+                                        s.name.toLowerCase().includes(nameLower) ||
+                                        nameLower.includes(s.name.toLowerCase())
+                                    );
+                                    if (match) updates.supplierId = match.id;
+                                }
+                                setFormData(prev => ({...prev, ...updates}));
+                            }
+                        } catch (aiErr) {
+                            console.warn('AI extraction failed (image still uploaded):', aiErr);
+                        } finally {
+                            setIsExtractingBill(false);
+                        }
+                    }
                 } catch (error) {
                     console.error('Error uploading image:', error);
                     alert('Failed to upload image');
@@ -2988,8 +3056,44 @@
 
                                     const renderBillFields = () => {
                                         const fieldList = fields[modalType] || [];
-                                        const skip = new Set();
+                                        const skip = new Set(['images']); // images rendered at top
                                         const blocks = [];
+
+                                        // --- Upload widget pinned to the top ---
+                                        blocks.push(
+                                            <div key="bill-upload-top" className="border-2 border-dashed rounded-lg p-3 bg-gray-50 border-blue-200">
+                                                {isExtractingBill ? (
+                                                    <div className="flex flex-col items-center justify-center gap-2 py-2">
+                                                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                        <span className="text-sm font-medium text-blue-600">Reading bill details…</span>
+                                                        <span className="text-xs text-gray-500">AI is extracting information from your image</span>
+                                                    </div>
+                                                ) : (
+                                                    <label className="flex items-center justify-center gap-2 w-full px-4 py-2 cursor-pointer hover:bg-blue-50 rounded-lg transition-colors">
+                                                        <Icon name="Camera" className="w-5 h-5 text-blue-500" />
+                                                        <span className="text-sm font-medium text-blue-600">Upload Bill Image or PDF</span>
+                                                        <span className="text-xs text-gray-400 ml-1">— auto-fills details</span>
+                                                        <input type="file" accept="image/*,application/pdf" onChange={handleBillImageUpload} className="hidden" />
+                                                    </label>
+                                                )}
+                                                {formData.images && formData.images.length > 0 && (
+                                                    <div className="grid grid-cols-3 gap-2 mt-2">
+                                                        {formData.images.map((img, idx) => (
+                                                            <div key={idx} className="relative group">
+                                                                {img.toLowerCase().includes('.pdf') ? (
+                                                                    <div className="w-full h-16 bg-red-50 border border-red-200 rounded flex items-center justify-center text-xs text-red-600 font-medium">PDF</div>
+                                                                ) : (
+                                                                    <img src={img} alt={`Bill ${idx+1}`} className="w-full h-16 object-cover rounded border border-gray-200" />
+                                                                )}
+                                                                <button type="button" onClick={() => removeImage(idx)} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs hidden group-hover:flex items-center justify-center">×</button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+
+                                        // --- Remaining fields ---
                                         fieldList.forEach(field => {
                                             if (skip.has(field.name)) return;
 
