@@ -32,5 +32,11 @@
       "source": "/app",
       "destination": "/app.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/supabase_keepalive",
+      "schedule": "0 8 * * *"
+    }
   ]
 }

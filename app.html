@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="/icon-192.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     
     <!-- Clerk Authentication -->
     <script 
@@ -36,13 +36,13 @@
     <style>
         :root {
             --app-bg: #f8fafc;
-            --app-bg-dark: #050918;
+            --app-bg-dark: #07111f;
             --panel-bg-light: rgba(255, 255, 255, 0.95);
-            --panel-bg-dark: rgba(15, 23, 42, 0.82);
+            --panel-bg-dark: rgba(15, 23, 42, 0.92);
             --panel-border-light: rgba(226, 232, 240, 0.6);
-            --panel-border-dark: rgba(148, 163, 184, 0.25);
+            --panel-border-dark: rgba(148, 163, 184, 0.16);
             --sidebar-bg-light: #ffffff;
-            --sidebar-bg-dark: #000000;
+            --sidebar-bg-dark: #07111f;
             --text-primary-light: #0f172a;
             --text-primary-dark: #f1f5f9;
             --text-secondary-light: #64748b;
@@ -55,9 +55,7 @@
             --sidebar-bg: var(--sidebar-bg-dark);
             --text-primary: var(--text-primary-dark);
             --text-secondary: var(--text-secondary-dark);
-            background: radial-gradient(circle at top, rgba(59,130,246,0.15), transparent 55%),
-                radial-gradient(circle at 20% 20%, rgba(16,185,129,0.12), transparent 45%),
-                var(--app-bg-dark);
+            background: linear-gradient(180deg, #0b1728 0%, #07111f 42%, #050b14 100%);
         }
         body[data-theme="light"] {
             --app-bg: var(--app-bg);
@@ -80,7 +78,7 @@
         body[data-font-family="system"] { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         body[data-font-family="monospace"] { font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace; }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { margin: 0; font-family: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--app-bg); color: var(--text-primary, #0f172a); transition: background 0.3s ease, color 0.3s ease; }
+        body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--app-bg); color: var(--text-primary, #0f172a); transition: background 0.3s ease, color 0.3s ease; }
         input, textarea, select, button { font-size: inherit; font-family: inherit; }
         
         /* Global font size scaling - all Tailwind text classes now scale with base font size */
@@ -97,8 +95,30 @@
         .content-shell { width: 100%; }
         .glass-panel { background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .surface-card { background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .dashboard-panel { background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(148, 163, 184, 0.16); box-shadow: 0 12px 32px rgba(0,0,0,0.22); }
+        .kpi-card { background: rgba(15, 23, 42, 0.86); border: 1px solid rgba(148, 163, 184, 0.16); box-shadow: 0 10px 28px rgba(0,0,0,0.18); }
+        .kpi-accent { width: 3px; border-radius: 999px; align-self: stretch; }
+        .status-pill { border: 1px solid rgba(148, 163, 184, 0.2); background: rgba(15, 23, 42, 0.72); }
         body[data-theme="dark"] .glass-panel { box-shadow: 0 10px 45px rgba(15,23,42,0.35); }
         body[data-theme="dark"] .surface-card { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+        body[data-theme="light"] .dashboard-panel,
+        body[data-theme="light"] .kpi-card,
+        body[data-theme="light"] .status-pill { background: #ffffff !important; border-color: #e2e8f0 !important; box-shadow: 0 6px 20px rgba(15,23,42,0.07); }
+        body[data-theme="light"] .dashboard-panel .text-white,
+        body[data-theme="light"] .kpi-card .text-white,
+        body[data-theme="light"] .status-pill .text-white,
+        body[data-theme="light"] .dashboard-panel .text-slate-200,
+        body[data-theme="light"] .kpi-card .text-slate-200,
+        body[data-theme="light"] .status-pill .text-slate-200 { color: #0f172a !important; }
+        body[data-theme="light"] .dashboard-panel .text-slate-400,
+        body[data-theme="light"] .kpi-card .text-slate-400,
+        body[data-theme="light"] .status-pill .text-slate-400,
+        body[data-theme="light"] .dashboard-panel .text-slate-500,
+        body[data-theme="light"] .kpi-card .text-slate-500 { color: #64748b !important; }
+        body[data-theme="light"] .dashboard-panel .bg-slate-800 { background: #e2e8f0 !important; }
+        body[data-theme="light"] .dashboard-panel .border-slate-700\/70,
+        body[data-theme="light"] .dashboard-panel .border-slate-800\/80,
+        body[data-theme="light"] .dashboard-panel .divide-slate-700\/60 > :not([hidden]) ~ :not([hidden]) { border-color: #e2e8f0 !important; }
         body[data-theme="light"] .sidebar { background: #ffffff !important; border-right: 1px solid #e2e8f0; }
         body[data-theme="light"] .sidebar .text-white { color: #0f172a !important; }
         body[data-theme="light"] .sidebar .text-gray-300 { color: #64748b !important; }
@@ -162,15 +182,15 @@
         body[data-theme="dark"] .bg-white .bg-gray-50 { background: #f8fafc !important; }
         
         .modal-backdrop { backdrop-filter: blur(4px); }
-        .sidebar { transition: transform 0.3s ease, width 0.3s ease; display: flex; flex-direction: column; }
+        .sidebar { transition: transform 0.3s ease, width 0.3s ease; display: flex; flex-direction: column; border-right: 1px solid rgba(148, 163, 184, 0.14); }
         .sidebar-nav { flex: 1; overflow-y: auto; overflow-x: hidden; }
         .sidebar-nav::-webkit-scrollbar { width: 4px; }
         .sidebar-nav::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
         @media print { .no-print { display: none; } }
         .sidebar-item { transition: all 0.2s; }
-        .sidebar-item:hover { background-color: rgba(59, 130, 246, 0.2); }
-        .sidebar-item.active { background-color: rgba(59, 130, 246, 0.3); border-left: 4px solid #3b82f6; }
+        .sidebar-item:hover { background-color: rgba(37, 99, 235, 0.12); }
+        .sidebar-item.active { background-color: rgba(37, 99, 235, 0.18); border-left: 3px solid #38bdf8; }
         
         /* Mobile Responsive */
         @media (max-width: 1024px) {
@@ -212,7 +232,7 @@
             autoReminders: true,
             theme: 'dark',
             fontSize: 'medium',
-            fontFamily: 'space-grotesk'
+            fontFamily: 'inter'
         };
 
         // Icon Component (simplified SVG icons)
@@ -650,6 +670,9 @@
                     const cached = localStorage.getItem(PREF_STORAGE_KEY);
                     if (cached) {
                         const parsed = JSON.parse(cached);
+                        if (parsed.fontFamily === 'space-grotesk') {
+                            parsed.fontFamily = 'inter';
+                        }
                         setPreferences(prev => ({ ...prev, ...parsed }));
                     }
                 } catch (error) {
@@ -3052,6 +3075,63 @@
                 {id: 'settings', icon: 'Settings', label: 'Settings'}
             ];
 
+            const unpaidInvoices = data.invoices.filter(i => i.status !== 'paid');
+            const unpaidBills = data.bills.filter(b => b.status !== 'paid');
+            const unreconciledTransactions = data.bankTransactions.filter(t => !t.reconciled).length;
+            const netPosition = metrics.cashBalance + metrics.totalReceivables - metrics.totalPayables;
+            const dashboardActions = [
+                {
+                    label: 'Bank transactions to reconcile',
+                    value: unreconciledTransactions,
+                    tone: unreconciledTransactions > 0 ? 'text-amber-300' : 'text-emerald-300',
+                    action: 'Open Banking',
+                    tab: 'banking'
+                },
+                {
+                    label: 'Unpaid sales invoices',
+                    value: unpaidInvoices.length,
+                    tone: unpaidInvoices.length > 0 ? 'text-sky-300' : 'text-slate-300',
+                    action: 'Review Invoices',
+                    tab: 'invoices'
+                },
+                {
+                    label: 'Purchase bills to pay',
+                    value: unpaidBills.length,
+                    tone: unpaidBills.length > 0 ? 'text-rose-300' : 'text-slate-300',
+                    action: 'Review Bills',
+                    tab: 'bills'
+                }
+            ];
+            const recentActivity = [
+                ...data.invoices.map(item => ({
+                    id: `invoice-${item.id}`,
+                    type: 'Invoice',
+                    label: item.invoice_number || item.invoiceNumber || 'Sales invoice',
+                    amount: item.total || 0,
+                    date: item.date,
+                    status: item.status || 'unpaid'
+                })),
+                ...data.bills.map(item => ({
+                    id: `bill-${item.id}`,
+                    type: 'Bill',
+                    label: item.bill_number || item.billNumber || 'Purchase bill',
+                    amount: item.total || 0,
+                    date: item.date,
+                    status: item.status || 'unpaid'
+                })),
+                ...data.expenses.map(item => ({
+                    id: `expense-${item.id}`,
+                    type: 'Expense',
+                    label: item.category || item.description || 'Expense',
+                    amount: item.amount || 0,
+                    date: item.date,
+                    status: 'posted'
+                }))
+            ]
+                .filter(item => item.date)
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+
             return (
                 <div className="app-shell flex">
                     {/* Sidebar */}
@@ -3156,58 +3236,161 @@
                         <div className="flex flex-col gap-8" onClick={() => window.innerWidth < 768 && setSidebarOpen(false)}>
                         {activeTab === 'dashboard' && (
                             <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white">
-                                <Icon name="DollarSign" className="w-8 h-8 mb-2" />
-                                <div className="text-3xl font-bold">£{metrics.totalRevenue.toLocaleString()}</div>
-                                <div className="text-blue-100 text-sm">Total Revenue</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 text-white">
-                                <Icon name="PiggyBank" className="w-8 h-8 mb-2" />
-                                <div className="text-3xl font-bold">£{metrics.cashBalance.toLocaleString()}</div>
-                                <div className="text-green-100 text-sm">Cash Balance</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-white">
-                                <Icon name="Clock" className="w-8 h-8 mb-2" />
-                                <div className="text-3xl font-bold">£{metrics.totalReceivables.toLocaleString()}</div>
-                                <div className="text-orange-100 text-sm">Receivables</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 text-white">
-                                <Icon name="CreditCard" className="w-8 h-8 mb-2" />
-                                <div className="text-3xl font-bold">£{metrics.totalPayables.toLocaleString()}</div>
-                                <div className="text-red-100 text-sm">Payables</div>
-                            </div>
-                        </div>
+                                <div className="flex flex-col gap-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Dashboard</p>
+                                    <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-white">{data.company.name || 'Company'} overview</h2>
+                                            <p className="text-sm text-slate-400">Operational snapshot across sales, bills, banking and compliance.</p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 text-xs">
+                                            <button onClick={() => setActiveTab('invoices')} className="status-pill text-slate-200 px-3 py-2 rounded-md hover:border-sky-400">
+                                                New invoice
+                                            </button>
+                                            <button onClick={() => setActiveTab('bills')} className="status-pill text-slate-200 px-3 py-2 rounded-md hover:border-sky-400">
+                                                Add bill
+                                            </button>
+                                            <button onClick={() => setActiveTab('banking')} className="status-pill text-slate-200 px-3 py-2 rounded-md hover:border-sky-400">
+                                                Reconcile
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-                            <div className="flex items-center gap-3">
-                                <Icon name="FileCheck" className="w-8 h-8" />
-                                <div>
-                                    <h3 className="text-xl font-bold">MTD Ready</h3>
-                                    <p className="text-purple-100 text-sm">Digital records ready for MTD submission</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                                    {[
+                                        {label: 'Cash balance', value: metrics.cashBalance, icon: 'PiggyBank', accent: 'bg-emerald-400', sub: `${data.bankAccounts.length} bank account${data.bankAccounts.length === 1 ? '' : 's'}`},
+                                        {label: 'Receivables', value: metrics.totalReceivables, icon: 'FileText', accent: 'bg-sky-400', sub: `${unpaidInvoices.length} unpaid invoice${unpaidInvoices.length === 1 ? '' : 's'}`},
+                                        {label: 'Payables', value: metrics.totalPayables, icon: 'CreditCard', accent: 'bg-rose-400', sub: `${unpaidBills.length} open bill${unpaidBills.length === 1 ? '' : 's'}`},
+                                        {label: 'Net position', value: netPosition, icon: 'TrendingUp', accent: netPosition >= 0 ? 'bg-emerald-400' : 'bg-amber-400', sub: 'Cash + receivables - payables'}
+                                    ].map(card => (
+                                        <div key={card.label} className="kpi-card rounded-lg p-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className={`kpi-accent ${card.accent}`}></div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{card.label}</p>
+                                                        <Icon name={card.icon} className="w-5 h-5 text-slate-500" />
+                                                    </div>
+                                                    <p className="mt-3 text-2xl font-bold text-white">£{Math.round(card.value || 0).toLocaleString()}</p>
+                                                    <p className="mt-1 text-xs text-slate-400">{card.sub}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 mt-4">
-                                <div className="bg-white bg-opacity-20 rounded p-3">
-                                    <div className="text-2xl font-bold text-white mtd-number">{data.vatReturns.length}</div>
-                                    <div className="text-sm text-purple-100 mtd-label">VAT Returns Filed</div>
-                                </div>
-                                <div className="bg-white bg-opacity-20 rounded p-3">
-                                    <div className="text-2xl font-bold text-white mtd-number">Compliant</div>
-                                    <div className="text-sm text-purple-100 mtd-label">HMRC Status</div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
-                            <div className="flex items-start gap-3">
-                                <Icon name="AlertTriangle" className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <h4 className="font-semibold text-gray-900 text-sm">Important Notice</h4>
-                                    <p className="text-gray-600 text-xs mt-1">You are responsible for validating all data accuracy before submission to HMRC. SwenBooks provides digital record-keeping tools but does not guarantee data accuracy or compliance. Users bear full responsibility for their tax submissions and filings.</p>
+                                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                                    <div className="dashboard-panel rounded-lg p-4 xl:col-span-2">
+                                        <div className="flex items-center justify-between gap-3 mb-3">
+                                            <div>
+                                                <h3 className="text-base font-semibold text-white">Needs Attention</h3>
+                                                <p className="text-xs text-slate-400">Work queue for the next accounting session.</p>
+                                            </div>
+                                            <span className="text-xs text-slate-400">{dashboardActions.reduce((sum, item) => sum + item.value, 0)} open</span>
+                                        </div>
+                                        <div className="divide-y divide-slate-700/60">
+                                            {dashboardActions.map(item => (
+                                                <div key={item.label} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className={`text-xl font-bold ${item.tone}`}>{item.value}</span>
+                                                        <span className="text-sm text-slate-200">{item.label}</span>
+                                                    </div>
+                                                    <button onClick={() => setActiveTab(item.tab)} className="text-xs font-semibold text-sky-300 hover:text-sky-200 self-start sm:self-auto">
+                                                        {item.action}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="dashboard-panel rounded-lg p-4">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Icon name="FileCheck" className="w-5 h-5 text-emerald-300" />
+                                            <div>
+                                                <h3 className="text-base font-semibold text-white">Compliance</h3>
+                                                <p className="text-xs text-slate-400">MTD and HMRC readiness.</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="status-pill rounded-md p-3">
+                                                <p className="text-2xl font-bold text-white mtd-number">{data.vatReturns.length}</p>
+                                                <p className="text-xs text-slate-400 mtd-label">VAT returns filed</p>
+                                            </div>
+                                            <div className="status-pill rounded-md p-3">
+                                                <p className="text-sm font-semibold text-emerald-300 mtd-number">Ready</p>
+                                                <p className="text-xs text-slate-400 mtd-label">Digital records</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 rounded-md border border-amber-400/20 bg-amber-400/10 p-3">
+                                            <p className="text-xs text-amber-100">Validate VAT, accounts and filing data before submission.</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+
+                                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                                    <div className="dashboard-panel rounded-lg p-4 xl:col-span-2">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-base font-semibold text-white">Recent Activity</h3>
+                                            <button onClick={() => setActiveTab('reports')} className="text-xs font-semibold text-sky-300 hover:text-sky-200">View reports</button>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-b border-slate-700/70 text-left text-xs uppercase tracking-wide text-slate-500">
+                                                        <th className="py-2 pr-3 font-semibold">Type</th>
+                                                        <th className="py-2 pr-3 font-semibold">Reference</th>
+                                                        <th className="py-2 pr-3 font-semibold">Date</th>
+                                                        <th className="py-2 text-right font-semibold">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {recentActivity.map(item => (
+                                                        <tr key={item.id} className="border-b border-slate-800/80 text-slate-200">
+                                                            <td className="py-3 pr-3 text-slate-400">{item.type}</td>
+                                                            <td className="py-3 pr-3 font-medium">{item.label}</td>
+                                                            <td className="py-3 pr-3 text-slate-400">{new Date(item.date).toLocaleDateString('en-GB')}</td>
+                                                            <td className="py-3 text-right font-semibold">£{parseFloat(item.amount || 0).toLocaleString()}</td>
+                                                        </tr>
+                                                    ))}
+                                                    {recentActivity.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan="4" className="py-8 text-center text-slate-500">No recent invoices, bills or expenses yet.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div className="dashboard-panel rounded-lg p-4">
+                                        <h3 className="text-base font-semibold text-white mb-3">Business Health</h3>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                                                    <span>Receivables coverage</span>
+                                                    <span>{metrics.totalReceivables > 0 ? Math.min(100, Math.round((metrics.cashBalance / metrics.totalReceivables) * 100)) : 100}%</span>
+                                                </div>
+                                                <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                                                    <div className="h-full bg-sky-400" style={{ width: `${metrics.totalReceivables > 0 ? Math.min(100, Math.round((metrics.cashBalance / metrics.totalReceivables) * 100)) : 100}%` }}></div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                                                    <span>Bill exposure</span>
+                                                    <span>£{Math.round(metrics.totalPayables || 0).toLocaleString()}</span>
+                                                </div>
+                                                <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                                                    <div className="h-full bg-rose-400" style={{ width: `${Math.min(100, metrics.totalReceivables > 0 ? Math.round((metrics.totalPayables / metrics.totalReceivables) * 100) : metrics.totalPayables > 0 ? 100 : 0)}%` }}></div>
+                                                </div>
+                                            </div>
+                                            <div className="status-pill rounded-md p-3">
+                                                <p className="text-xs text-slate-400">Revenue recognised</p>
+                                                <p className="mt-1 text-xl font-bold text-white">£{Math.round(metrics.totalRevenue || 0).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </>
                         )}
 
