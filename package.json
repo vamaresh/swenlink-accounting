@@ -1,0 +1,16 @@
+{
+  "name": "swenlink-accounting",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SwenBooks accounting app automated BDD end-to-end test suite",
+  "scripts": {
+    "test": "npm run test:e2e",
+    "test:e2e": "cucumber-js --config cucumber.js",
+    "test:e2e:headed": "HEADLESS=false cucumber-js --config cucumber.js",
+    "test:e2e:wip": "cucumber-js --config cucumber.js --tags @wip"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.3.0",
+    "playwright": "^1.52.0"
+  }
+}
