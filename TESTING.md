@@ -1,27 +1,45 @@
-# Testing Instructions
+# Automated Testing
 
-## Current Status
+The app now has a BDD end-to-end suite powered by Cucumber and Playwright.
 
-### ✅ Working: `index.html` (Free Version - localStorage)
-- Open `index.html` in browser
-- All features work with localStorage
-- Data persists locally only
-- No authentication required
+## Run Locally
 
-### 🚧 In Progress: Premium Version (Clerk + Supabase)
-- Database schema created in Supabase
-- Storage bucket configured
-- Ready for integration
+```bash
+npm install
+npm test
+```
 
-## Admin Email
-**amareshvel@gmail.com** - Will get free admin access
+Use headed browser mode when debugging:
 
-## Next Steps
-The premium integration requires careful implementation due to file size (1676 lines).
+```bash
+npm run test:e2e:headed
+```
 
-**Options:**
-1. Create minimal proof-of-concept first
-2. Implement feature-by-feature migration  
-3. Build separate lightweight premium version
+Reports are generated in `reports/`:
 
-Please confirm which approach you'd prefer for the premium implementation.
+- `reports/cucumber-report.html`
+- `reports/cucumber-report.json`
+- `reports/cucumber-junit.xml`
+
+## Coverage
+
+The BDD features cover:
+
+- First-time landing page and preview login flow.
+- Every primary navigation link.
+- People, Compliance and Banking tab groups.
+- CRUD-style create/delete workflows for customers, suppliers, sales invoices, purchase bills, expenses, chart of accounts and bank accounts in demo mode.
+- Banking CSV import, duplicate detection, search, detail view readability and reconciliation.
+- Global theme, font and standard button contrast checks.
+
+## CI / Merge Gate
+
+GitHub Actions runs `.github/workflows/bdd-e2e.yml` on pushes and pull requests. The job name is `bdd-e2e`.
+
+To block merges when tests fail, enable branch protection in GitHub:
+
+1. Go to `Settings` -> `Branches`.
+2. Add or edit the rule for `main` or `master`.
+3. Enable `Require status checks to pass before merging`.
+4. Select the required check named `bdd-e2e`.
+5. Enable `Require branches to be up to date before merging`.

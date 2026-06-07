@@ -36,6 +36,7 @@
     <style>
         :root {
             --app-bg: #f8fafc;
+            --app-bg-light: #f8fafc;
             --app-bg-dark: #07111f;
             --panel-bg-light: rgba(255, 255, 255, 0.95);
             --panel-bg-dark: rgba(15, 23, 42, 0.92);
@@ -47,6 +48,11 @@
             --text-primary-dark: #f1f5f9;
             --text-secondary-light: #64748b;
             --text-secondary-dark: #94a3b8;
+            --surface-1: #ffffff;
+            --surface-2: #f8fafc;
+            --field-bg: #ffffff;
+            --border-subtle: #e2e8f0;
+            --theme-shadow: 0 8px 24px rgba(15,23,42,0.08);
         }
         body[data-theme="dark"] {
             --app-bg: var(--app-bg-dark);
@@ -58,7 +64,7 @@
             background: linear-gradient(180deg, #0b1728 0%, #07111f 42%, #050b14 100%);
         }
         body[data-theme="light"] {
-            --app-bg: var(--app-bg);
+            --app-bg: var(--app-bg-light);
             --panel-bg: var(--panel-bg-light);
             --panel-border: var(--panel-border-light);
             --sidebar-bg: var(--sidebar-bg-light);
@@ -95,15 +101,72 @@
         .content-shell { width: 100%; }
         .glass-panel { background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .surface-card { background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .dashboard-panel { background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(148, 163, 184, 0.16); box-shadow: 0 12px 32px rgba(0,0,0,0.22); }
-        .kpi-card { background: rgba(15, 23, 42, 0.86); border: 1px solid rgba(148, 163, 184, 0.16); box-shadow: 0 10px 28px rgba(0,0,0,0.18); }
+        .dashboard-panel { background: var(--surface-1); border: 1px solid var(--panel-border); box-shadow: var(--theme-shadow); }
+        .kpi-card { background: var(--surface-1); border: 1px solid var(--panel-border); box-shadow: var(--theme-shadow); }
         .kpi-accent { width: 3px; border-radius: 999px; align-self: stretch; }
-        .status-pill { border: 1px solid rgba(148, 163, 184, 0.2); background: rgba(15, 23, 42, 0.72); }
+        .status-pill { border: 1px solid var(--panel-border); background: var(--surface-2); }
+        .page-title { color: var(--text-primary); }
+        .page-subtitle { color: var(--text-secondary); }
+        .quick-action { color: #dbeafe; border-color: rgba(148, 163, 184, 0.28); background: rgba(15, 23, 42, 0.72); }
+        .quick-action:hover { border-color: #38bdf8; color: #ffffff; }
+        .sidebar-section-label { color: #64748b; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.75rem 0.75rem 0.35rem; }
+        .section-tabs { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; border-radius: 0.625rem; background: var(--surface-2); border: 1px solid var(--panel-border); padding: 0.25rem; }
+        .section-tab { border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; font-weight: 700; color: var(--text-secondary); transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
+        .section-tab:hover { color: var(--text-primary); }
+        .section-tab.active { background: var(--surface-1); color: #2563eb; box-shadow: var(--theme-shadow); }
+        .theme-toggle { display: inline-flex; width: 100%; gap: 0.25rem; border-radius: 0.625rem; background: var(--surface-2); border: 1px solid var(--panel-border); padding: 0.25rem; }
+        .theme-toggle button { flex: 1; border-radius: 0.5rem; padding: 0.55rem 0.75rem; font-size: 0.875rem; font-weight: 700; color: var(--text-secondary); transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
+        .theme-toggle button.active { background: var(--surface-1); color: #2563eb; box-shadow: var(--theme-shadow); }
+        .theme-radio-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; margin-top: 0.25rem; }
+        .theme-radio-option { display: flex; align-items: center; gap: 0.45rem; min-height: 2.35rem; border-radius: 0.625rem; border: 1px solid var(--panel-border); background: var(--surface-2); color: var(--text-secondary); padding: 0.5rem 0.65rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease; }
+        .theme-radio-option:hover { color: var(--text-primary); }
+        .theme-radio-option input { accent-color: #2563eb; margin: 0; }
+        .theme-radio-option.active { background: var(--surface-1); color: var(--text-primary); border-color: #2563eb; }
+        .theme-switch { border: 1px solid var(--panel-border); background: var(--surface-2); color: var(--text-secondary); }
+        .theme-switch-track { width: 2.75rem; height: 1.45rem; border-radius: 999px; background: rgba(148, 163, 184, 0.28); padding: 0.15rem; transition: background 0.18s ease; }
+        .theme-switch-thumb { width: 1.15rem; height: 1.15rem; border-radius: 999px; background: var(--text-primary); transition: transform 0.18s ease, background 0.18s ease; }
+        body[data-theme="light"] .theme-switch-track { background: #bfdbfe; }
+        body[data-theme="light"] .theme-switch-thumb { transform: translateX(1.3rem); background: #2563eb; }
+        .advice-card { background: var(--surface-1); border: 1px solid var(--panel-border); color: var(--text-primary); }
+        .advice-card p { color: var(--text-secondary); }
+        .advice-card strong { color: var(--text-primary); }
+        body[data-theme="light"] .advice-card { background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 100%); }
+        .notice-card { background: var(--surface-2); border: 1px solid var(--panel-border); color: var(--text-secondary); }
+        .notice-card strong { color: var(--text-primary); }
+        body[data-theme="light"] .notice-card.is-warning { background: #fefce8; border-color: #fde68a; color: #854d0e; }
+        body[data-theme="light"] .notice-card.is-info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+        body[data-theme="light"] .notice-card.is-success { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+        .metric-card { background: var(--surface-1); border: 1px solid var(--panel-border); color: var(--text-primary); }
+        .metric-card p { color: var(--text-secondary); }
+        .toast-stack { position: fixed; left: 50%; top: 1rem; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 0.75rem; width: min(28rem, calc(100vw - 2rem)); }
+        .app-toast { border-radius: 0.875rem; border: 1px solid var(--panel-border); background: var(--surface-1); color: var(--text-primary); box-shadow: 0 18px 40px rgba(0,0,0,0.28); padding: 0.85rem 1rem; }
+        .app-toast p { white-space: pre-line; }
+        .app-toast.success { border-color: rgba(16, 185, 129, 0.45); }
+        .app-toast.error { border-color: rgba(239, 68, 68, 0.55); }
+        .app-toast.warning { border-color: rgba(245, 158, 11, 0.55); }
+        .app-toast.info { border-color: rgba(59, 130, 246, 0.45); }
+        .confirm-dialog { background: var(--surface-1); border: 1px solid var(--panel-border); color: var(--text-primary); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; border-radius: 0.625rem; border: 1px solid transparent; padding: 0.55rem 1rem; font-size: 0.875rem; font-weight: 700; line-height: 1.25; transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
+        .btn:disabled { cursor: not-allowed; opacity: 0.58; }
+        .btn-secondary { background: var(--surface-2); border-color: var(--panel-border); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--surface-1); border-color: rgba(148, 163, 184, 0.42); }
+        .btn-success { background: #047857; border-color: #047857; color: #ffffff; box-shadow: 0 8px 18px rgba(4, 120, 87, 0.22); }
+        .btn-success:hover { background: #065f46; border-color: #065f46; }
+        .btn-primary { background: #2563eb; border-color: #2563eb; color: #ffffff; box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22); }
+        .btn-primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
+        .btn-danger { background: #dc2626; border-color: #dc2626; color: #ffffff; box-shadow: 0 8px 18px rgba(220, 38, 38, 0.18); }
+        .btn-danger:hover { background: #b91c1c; border-color: #b91c1c; }
         body[data-theme="dark"] .glass-panel { box-shadow: 0 10px 45px rgba(15,23,42,0.35); }
         body[data-theme="dark"] .surface-card { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+        body[data-theme="dark"] .surface-card .text-slate-900,
+        body[data-theme="dark"] .surface-card .text-slate-950 { color: #f8fafc !important; }
+        body[data-theme="dark"] .surface-card .text-slate-600,
+        body[data-theme="dark"] .surface-card .text-slate-700 { color: #cbd5e1 !important; }
         body[data-theme="light"] .dashboard-panel,
         body[data-theme="light"] .kpi-card,
         body[data-theme="light"] .status-pill { background: #ffffff !important; border-color: #e2e8f0 !important; box-shadow: 0 6px 20px rgba(15,23,42,0.07); }
+        body[data-theme="light"] .quick-action { color: #334155; background: #ffffff; border-color: #dbe4ef; box-shadow: 0 6px 18px rgba(15,23,42,0.06); }
+        body[data-theme="light"] .quick-action:hover { color: #0f172a; border-color: #7dd3fc; }
         body[data-theme="light"] .dashboard-panel .text-white,
         body[data-theme="light"] .kpi-card .text-white,
         body[data-theme="light"] .status-pill .text-white,
@@ -124,6 +187,7 @@
         body[data-theme="light"] .sidebar .text-gray-300 { color: #64748b !important; }
         body[data-theme="light"] .sidebar .text-gray-400 { color: #94a3b8 !important; }
         body[data-theme="light"] .sidebar .text-blue-400 { color: #3b82f6 !important; }
+        body[data-theme="light"] .sidebar-section-label { color: #64748b; }
         body[data-theme="light"] .sidebar .border-gray-700 { border-color: #e2e8f0 !important; }
         body[data-theme="light"] .sidebar .text-slate-300,
         body[data-theme="light"] .sidebar .text-slate-400,
@@ -150,36 +214,141 @@
         body[data-theme="light"] .sidebar .bg-red-600 { background-color: #dc2626 !important; color: white !important; }
         body[data-theme="light"] .sidebar .bg-green-600 { background-color: #16a34a !important; color: white !important; }
         body[data-theme="light"] .sidebar .bg-blue-600 { background-color: #2563eb !important; color: white !important; }
-        body[data-theme="light"] .bg-white { background: #ffffff !important; color: #0f172a !important; }
+        body[data-theme="light"] .bg-white { background: var(--surface-1) !important; color: var(--text-primary) !important; }
         body[data-theme="light"] .text-gray-500 { color: #64748b !important; }
         body[data-theme="light"] .text-gray-700 { color: #334155 !important; }
         body[data-theme="light"] .text-gray-800 { color: #1e293b !important; }
-        body[data-theme="light"] .bg-gray-50 { background: #f8fafc !important; }
+        body[data-theme="light"] .bg-gray-50 { background: var(--surface-2) !important; }
         body[data-theme="light"] table { color: #0f172a !important; }
         body[data-theme="light"] .mtd-number { color: #0f172a !important; }
         body[data-theme="light"] .mtd-label { color: #334155 !important; }
         
-        /* Dark mode: ensure dark text on white backgrounds */
-        body[data-theme="dark"] .bg-white { color: #0f172a !important; }
-        body[data-theme="dark"] .bg-white .text-gray-500 { color: #64748b !important; }
-        body[data-theme="dark"] .bg-white .text-gray-600 { color: #475569 !important; }
-        body[data-theme="dark"] .bg-white .text-gray-700 { color: #334155 !important; }
-        body[data-theme="dark"] .bg-white .text-gray-800 { color: #1e293b !important; }
-        body[data-theme="dark"] .bg-white .text-gray-900 { color: #0f172a !important; }
+        /* Theme bridge for older page markup that still uses Tailwind colour utilities. */
+        body[data-theme="dark"] .bg-white { background: var(--surface-1) !important; color: var(--text-primary) !important; border-color: var(--panel-border) !important; }
+        body[data-theme="dark"] .bg-gray-50 { background: var(--surface-2) !important; }
+        body[data-theme="dark"] .border-gray-200,
+        body[data-theme="dark"] .border-gray-300 { border-color: var(--panel-border) !important; }
+        body[data-theme="dark"] .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--panel-border) !important; }
+        body[data-theme="dark"] button.bg-gray-100,
+        body[data-theme="dark"] button.bg-gray-200,
+        body[data-theme="dark"] button.bg-gray-300 {
+            background: var(--surface-2) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--text-primary) !important;
+        }
+        body[data-theme="dark"] button.bg-green-600 {
+            background: #047857 !important;
+            border-color: #047857 !important;
+            color: #ffffff !important;
+        }
+        body[data-theme="dark"] .text-gray-500,
+        body[data-theme="dark"] .text-gray-600 { color: var(--text-secondary) !important; }
+        body[data-theme="dark"] .text-gray-700,
+        body[data-theme="dark"] .text-gray-800,
+        body[data-theme="dark"] .text-gray-900 { color: var(--text-primary) !important; }
+        body[data-theme="dark"] .bg-white .text-gray-500,
+        body[data-theme="dark"] .bg-white .text-gray-600 { color: var(--text-secondary) !important; }
+        body[data-theme="dark"] .bg-white .text-gray-700,
+        body[data-theme="dark"] .bg-white .text-gray-800,
+        body[data-theme="dark"] .bg-white .text-gray-900 { color: var(--text-primary) !important; }
         body[data-theme="dark"] .bg-white h1,
         body[data-theme="dark"] .bg-white h2,
         body[data-theme="dark"] .bg-white h3,
         body[data-theme="dark"] .bg-white h4,
         body[data-theme="dark"] .bg-white h5,
-        body[data-theme="dark"] .bg-white h6 { color: #0f172a !important; }
-        body[data-theme="dark"] .bg-white table { color: #0f172a !important; }
-        body[data-theme="dark"] .bg-white th { color: #0f172a !important; }
-        body[data-theme="dark"] .bg-white td { color: #334155 !important; }
-        body[data-theme="dark"] .bg-white label { color: #334155 !important; }
+        body[data-theme="dark"] .bg-white h6 { color: var(--text-primary) !important; }
+        body[data-theme="dark"] .bg-white table { color: var(--text-primary) !important; }
+        body[data-theme="dark"] .bg-white th { color: var(--text-primary) !important; }
+        body[data-theme="dark"] .bg-white td { color: var(--text-secondary) !important; }
+        body[data-theme="dark"] .bg-white label { color: var(--text-primary) !important; }
         body[data-theme="dark"] .bg-white input,
         body[data-theme="dark"] .bg-white textarea,
-        body[data-theme="dark"] .bg-white select { color: #0f172a !important; }
-        body[data-theme="dark"] .bg-white .bg-gray-50 { background: #f8fafc !important; }
+        body[data-theme="dark"] .bg-white select,
+        body[data-theme="dark"] input,
+        body[data-theme="dark"] textarea,
+        body[data-theme="dark"] select {
+            background: var(--field-bg) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--text-primary) !important;
+        }
+        body[data-theme="dark"] input::placeholder,
+        body[data-theme="dark"] textarea::placeholder { color: var(--text-secondary) !important; }
+        body[data-theme="dark"] .bg-white .bg-gray-50 { background: var(--surface-2) !important; }
+        body[data-theme="dark"] .bg-slate-50,
+        body[data-theme="dark"] .bg-slate-100,
+        body[data-theme="dark"] .bg-slate-200,
+        body[data-theme="dark"] .bg-white .bg-slate-50,
+        body[data-theme="dark"] .bg-white .bg-slate-100,
+        body[data-theme="dark"] .bg-white .bg-slate-200 {
+            background: var(--surface-2) !important;
+            color: var(--text-primary) !important;
+        }
+        body[data-theme="dark"] .border-slate-200,
+        body[data-theme="dark"] .border-slate-300,
+        body[data-theme="dark"] .border-slate-700,
+        body[data-theme="dark"] .border-slate-800 {
+            border-color: var(--panel-border) !important;
+        }
+        body[data-theme="dark"] .text-slate-400,
+        body[data-theme="dark"] .text-slate-500,
+        body[data-theme="dark"] .text-slate-600,
+        body[data-theme="dark"] .bg-white .text-slate-400,
+        body[data-theme="dark"] .bg-white .text-slate-500,
+        body[data-theme="dark"] .bg-white .text-slate-600 {
+            color: var(--text-secondary) !important;
+        }
+        body[data-theme="dark"] .text-slate-700,
+        body[data-theme="dark"] .text-slate-800,
+        body[data-theme="dark"] .text-slate-900,
+        body[data-theme="dark"] .text-slate-950,
+        body[data-theme="dark"] .bg-white .text-slate-700,
+        body[data-theme="dark"] .bg-white .text-slate-800,
+        body[data-theme="dark"] .bg-white .text-slate-900,
+        body[data-theme="dark"] .bg-white .text-slate-950 {
+            color: var(--text-primary) !important;
+        }
+        body[data-theme="dark"] .bg-blue-50,
+        body[data-theme="dark"] .bg-blue-100,
+        body[data-theme="dark"] .bg-yellow-50,
+        body[data-theme="dark"] .bg-yellow-100,
+        body[data-theme="dark"] .bg-green-50,
+        body[data-theme="dark"] .bg-green-100,
+        body[data-theme="dark"] .bg-emerald-50,
+        body[data-theme="dark"] .bg-emerald-100,
+        body[data-theme="dark"] .bg-red-50,
+        body[data-theme="dark"] .bg-red-100,
+        body[data-theme="dark"] .bg-rose-50,
+        body[data-theme="dark"] .bg-purple-50,
+        body[data-theme="dark"] .bg-purple-100,
+        body[data-theme="dark"] .bg-orange-50,
+        body[data-theme="dark"] .bg-orange-100,
+        body[data-theme="dark"] .bg-slate-50 {
+            background: var(--surface-2) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--text-primary) !important;
+        }
+        body[data-theme="dark"] .bg-gradient-to-br.from-blue-50,
+        body[data-theme="dark"] .bg-gradient-to-br.from-purple-50,
+        body[data-theme="dark"] .bg-gradient-to-br.from-green-50,
+        body[data-theme="dark"] .bg-gradient-to-br.from-orange-50 {
+            background: var(--surface-1) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--text-primary) !important;
+        }
+        body[data-theme="dark"] .text-blue-700,
+        body[data-theme="dark"] .text-blue-800,
+        body[data-theme="dark"] .text-blue-900,
+        body[data-theme="dark"] .text-yellow-700,
+        body[data-theme="dark"] .text-yellow-800,
+        body[data-theme="dark"] .text-emerald-700,
+        body[data-theme="dark"] .text-emerald-900,
+        body[data-theme="dark"] .text-green-700,
+        body[data-theme="dark"] .text-rose-900,
+        body[data-theme="dark"] .text-purple-700,
+        body[data-theme="dark"] .text-purple-900,
+        body[data-theme="dark"] .text-orange-700 {
+            color: var(--text-primary) !important;
+        }
         
         .modal-backdrop { backdrop-filter: blur(4px); }
         .sidebar { transition: transform 0.3s ease, width 0.3s ease; display: flex; flex-direction: column; border-right: 1px solid rgba(148, 163, 184, 0.14); }
@@ -223,14 +392,63 @@
     <div id="root"></div>
     <script type="text/babel">
         // React Components and App Code
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect, useMemo, useRef } = React;
         const PREF_STORAGE_KEY = 'swenlink-accounting-preferences';
+        const APP_THEME_CONFIG = {
+            defaultTheme: 'dark',
+            themes: {
+                dark: {
+                    appBg: '#07111f',
+                    appBgGradient: 'linear-gradient(180deg, #0b1728 0%, #07111f 42%, #050b14 100%)',
+                    panelBg: 'rgba(15, 23, 42, 0.92)',
+                    panelBorder: 'rgba(148, 163, 184, 0.16)',
+                    sidebarBg: '#07111f',
+                    textPrimary: '#f1f5f9',
+                    textSecondary: '#94a3b8',
+                    surface1: '#0f172a',
+                    surface2: '#111c2e',
+                    fieldBg: '#0b1220',
+                    borderSubtle: 'rgba(148, 163, 184, 0.18)',
+                    shadow: '0 12px 32px rgba(0,0,0,0.24)'
+                },
+                light: {
+                    appBg: '#f8fafc',
+                    appBgGradient: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%)',
+                    panelBg: 'rgba(255, 255, 255, 0.95)',
+                    panelBorder: 'rgba(226, 232, 240, 0.72)',
+                    sidebarBg: '#ffffff',
+                    textPrimary: '#0f172a',
+                    textSecondary: '#64748b',
+                    surface1: '#ffffff',
+                    surface2: '#f8fafc',
+                    fieldBg: '#ffffff',
+                    borderSubtle: '#e2e8f0',
+                    shadow: '0 8px 24px rgba(15,23,42,0.08)'
+                }
+            }
+        };
+        const applyThemeTokens = (themeName) => {
+            const theme = APP_THEME_CONFIG.themes[themeName] || APP_THEME_CONFIG.themes[APP_THEME_CONFIG.defaultTheme];
+            const root = document.body;
+            root.style.setProperty('--app-bg', theme.appBg);
+            root.style.setProperty('--panel-bg', theme.panelBg);
+            root.style.setProperty('--panel-border', theme.panelBorder);
+            root.style.setProperty('--sidebar-bg', theme.sidebarBg);
+            root.style.setProperty('--text-primary', theme.textPrimary);
+            root.style.setProperty('--text-secondary', theme.textSecondary);
+            root.style.setProperty('--surface-1', theme.surface1);
+            root.style.setProperty('--surface-2', theme.surface2);
+            root.style.setProperty('--field-bg', theme.fieldBg);
+            root.style.setProperty('--border-subtle', theme.borderSubtle);
+            root.style.setProperty('--theme-shadow', theme.shadow);
+            root.style.background = theme.appBgGradient;
+        };
         const defaultPreferences = {
             currency: 'GBP',
             invoicePrefix: 'INV',
             paymentTerms: 30,
             autoReminders: true,
-            theme: 'dark',
+            theme: APP_THEME_CONFIG.defaultTheme,
             fontSize: 'medium',
             fontFamily: 'inter'
         };
@@ -271,7 +489,9 @@
                 Camera: "M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z",
                 Image: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
                 Menu: "M4 6h16M4 12h16M4 18h16",
-                Settings: "M12 8a4 4 0 100 8 4 4 0 000-8zm7.44 4a7.44 7.44 0 00-.14-1.5l1.75-1.37a1 1 0 00.25-1.32l-1.73-3a1 1 0 00-1.27-.44l-2.06.83a7.52 7.52 0 00-2.6-1.5l-.32-2.18A1 1 0 0011.92 1h-1.84a1 1 0 00-.99.82l-.32 2.18a7.52 7.52 0 00-2.6 1.5l-2.06-.83a1 1 0 00-1.27.44l-1.73 3a1 1 0 00.25 1.32l1.75 1.37a7.44 7.44 0 000 3l-1.75 1.37a1 1 0 00-.25 1.32l1.73 3a1 1 0 001.27.44l2.06-.83a7.52 7.52 0 002.6 1.5l.32 2.18a1 1 0 00.99.82h1.84a1 1 0 00.99-.82l.32-2.18a7.52 7.52 0 002.6-1.5l2.06.83a1 1 0 001.27-.44l1.73-3a1 1 0 00-.25-1.32l-1.75-1.37c.09-.49.14-.99.14-1.5z"
+                Settings: "M12 8a4 4 0 100 8 4 4 0 000-8zm7.44 4a7.44 7.44 0 00-.14-1.5l1.75-1.37a1 1 0 00.25-1.32l-1.73-3a1 1 0 00-1.27-.44l-2.06.83a7.52 7.52 0 00-2.6-1.5l-.32-2.18A1 1 0 0011.92 1h-1.84a1 1 0 00-.99.82l-.32 2.18a7.52 7.52 0 00-2.6 1.5l-2.06-.83a1 1 0 00-1.27.44l-1.73 3a1 1 0 00.25 1.32l1.75 1.37a7.44 7.44 0 000 3l-1.75 1.37a1 1 0 00-.25 1.32l1.73 3a1 1 0 001.27.44l2.06-.83a7.52 7.52 0 002.6 1.5l.32 2.18a1 1 0 00.99.82h1.84a1 1 0 00.99-.82l.32-2.18a7.52 7.52 0 002.6-1.5l2.06.83a1 1 0 001.27-.44l1.73-3a1 1 0 00-.25-1.32l-1.75-1.37c.09-.49.14-.99.14-1.5z",
+                Sun: "M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z",
+                Moon: "M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
             };
             return (
                 <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -287,6 +507,53 @@
         // Initialize Supabase
         const SUPABASE_URL = 'https://brorfoqjqzkkwetbykly.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyb3Jmb3FqcXpra3dldGJ5a2x5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MzYyNzgsImV4cCI6MjA4MTMxMjI3OH0.eBBAQpyzt-umBMTYkjVgUg3uXo4sPe4nLfw9eEhqS2c';
+        const isLocalDemoAvailable = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+        const demoUser = {
+            id: 'local-demo-user',
+            primaryEmailAddress: { emailAddress: 'demo@swenbooks.local' }
+        };
+        const demoData = {
+            company: {
+                id: 'demo-company',
+                name: 'Swenlink Limited',
+                regNumber: '12345678',
+                taxNumber: '',
+                address: 'London, United Kingdom',
+                financialYearStart: '2026-04-01',
+                mtdEnabled: false
+            },
+            customers: [
+                { id: 'cust-1', name: 'Northstar Digital Ltd', email: 'finance@northstar.example', phone: '020 7000 0101' }
+            ],
+            suppliers: [
+                { id: 'sup-1', name: 'Amazon Business', email: 'receipts@amazon.example', phone: '' },
+                { id: 'sup-2', name: 'Currys Business', email: 'business@currys.example', phone: '' }
+            ],
+            invoices: [
+                { id: 'inv-1', customerId: 'cust-1', invoiceNumber: 'INV-2026-001', date: '2026-06-01', dueDate: '2026-06-15', description: 'Consulting services', subtotal: 1250, vatRate: 0, vat: 0, total: 1250, status: 'unpaid' }
+            ],
+            bills: [
+                { id: 'bill-1', supplierId: 'sup-2', billNumber: 'CUR-45821', date: '2026-06-03', dueDate: '2026-06-17', description: 'Laptop on supplier invoice, payable later', subtotal: 899, vatRate: 0, vat: 0, total: 899, status: 'unpaid', images: [] }
+            ],
+            expenses: [
+                { id: 'exp-1', date: '2026-06-02', category: 'office', description: 'Amazon keyboard and stationery, paid by card', amount: 86.43, paymentMethod: 'card', images: [] },
+                { id: 'exp-2', date: '2026-06-04', category: 'travel', description: 'Train fare to client meeting', amount: 42.8, paymentMethod: 'card', images: [] }
+            ],
+            bankAccounts: [
+                { id: 'bank-1', name: 'Main Business Account', bank: 'Tide', balance: 8320.2, currency: 'GBP' }
+            ],
+            bankTransactions: [
+                { id: 'txn-1', date: '2026-06-04', description: 'AMAZON MARKETPLACE', paid_in: 0, paid_out: 86.43, reconciled: true, suggested_category: 'Office Supplies' },
+                { id: 'txn-2', date: '2026-06-05', description: 'CURRYS BUSINESS', paid_in: 0, paid_out: 899, reconciled: false, suggested_category: 'Computer Equipment' }
+            ],
+            chartOfAccounts: [
+                { id: 'acc-1', code: '1000', name: 'Business Bank', type: 'Asset', account_code: '1000', account_name: 'Business Bank', account_type: 'asset', balance: 8320.2 },
+                { id: 'acc-2', code: '5000', name: 'Operating Expenses', type: 'Expense', account_code: '5000', account_name: 'Operating Expenses', account_type: 'expense', balance: 129.23 }
+            ],
+            vatReturns: [],
+            categorizationRules: [],
+            journalEntries: []
+        };
         
         const { createClient } = supabase;
         let supabaseAuthToken = null;
@@ -350,10 +617,34 @@
             return freshToken;
         };
 
+        const callAppRpc = async (functionName, params = {}) => {
+            const appSchemaClient = typeof supabaseClient.schema === 'function'
+                ? supabaseClient.schema('app')
+                : null;
+            if (appSchemaClient) {
+                const result = await appSchemaClient.rpc(functionName, params);
+                if (!result.error) return result;
+                const message = result.error.message || '';
+                const shouldFallback = message.includes('schema cache') || message.includes('Could not find the function') || message.includes('schema must be one of');
+                if (!shouldFallback) return result;
+            }
+            const publicResult = await supabaseClient.rpc(functionName, params);
+            if (!publicResult.error) return publicResult;
+            return publicResult;
+        };
+        const getFriendlyRpcError = (error, functionName) => {
+            const message = error?.message || String(error || 'Unknown error');
+            if (message.includes('Could not find the function') || message.includes('schema cache')) {
+                return `Database function "${functionName}" is not available to the app yet. Run sql/migrations/2026-06-06_public_app_rpc_wrappers.sql in Supabase, then retry. Original error: ${message}`;
+            }
+            return message;
+        };
+
         const SwenlinkAccounting = () => {
             const [clerk, setClerk] = useState(null);
             const [user, setUser] = useState(null);
             const [subscription, setSubscription] = useState(null);
+            const [isDemoMode, setIsDemoMode] = useState(false);
             const [isLoading, setIsLoading] = useState(true);
             const [showCompanySetup, setShowCompanySetup] = useState(false);
             const [companyForm, setCompanyForm] = useState({
@@ -366,7 +657,7 @@
             const [formData, setFormData] = useState({});
             const [editingId, setEditingId] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
-            const [sidebarOpen, setSidebarOpen] = useState(true);
+            const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
             const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
             const [inlineCreation, setInlineCreation] = useState({ customer: false, supplier: false });
             const [inlineFormData, setInlineFormData] = useState({
@@ -374,6 +665,9 @@
                 supplier: { name: '', email: '', phone: '', address: '' }
             });
             const [inlineSaving, setInlineSaving] = useState({ customer: false, supplier: false });
+            const [notifications, setNotifications] = useState([]);
+            const [confirmDialog, setConfirmDialog] = useState(null);
+            const confirmResolverRef = useRef(null);
             const [preferences, setPreferences] = useState(defaultPreferences);
             const [settingsForm, setSettingsForm] = useState({
                 name: '',
@@ -443,10 +737,43 @@
                     assign_matched_type: 'expense'
                 })
                 const [bankingSubTab, setBankingSubTab] = React.useState('transactions')
-                const [isExtractingBill, setIsExtractingBill] = React.useState(false)
+            const [bankSearchTerm, setBankSearchTerm] = React.useState('')
+            const [bankStatusFilter, setBankStatusFilter] = React.useState('needs_review')
+            const [bankImportSummary, setBankImportSummary] = React.useState(null)
+            const [expandedBankTxnId, setExpandedBankTxnId] = React.useState(null)
+            const [peopleSubTab, setPeopleSubTab] = React.useState('customers')
+            const [complianceSubTab, setComplianceSubTab] = React.useState('keydates')
+            const [isExtractingBill, setIsExtractingBill] = React.useState(false)
+
+            const showToast = (message, type = 'info', options = {}) => {
+                const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                const timeout = options.timeout ?? (type === 'error' ? 7000 : 4200);
+                setNotifications(prev => [...prev, { id, message, type }]);
+                window.setTimeout(() => {
+                    setNotifications(prev => prev.filter(item => item.id !== id));
+                }, timeout);
+            };
+
+            const requestConfirm = ({ title = 'Confirm action', message, confirmText = 'Confirm', cancelText = 'Cancel', tone = 'danger' }) => {
+                return new Promise(resolve => {
+                    confirmResolverRef.current = resolve;
+                    setConfirmDialog({ title, message, confirmText, cancelText, tone });
+                });
+            };
+
+            const resolveConfirm = (result) => {
+                if (confirmResolverRef.current) {
+                    confirmResolverRef.current(result);
+                    confirmResolverRef.current = null;
+                }
+                setConfirmDialog(null);
+            };
 
             useEffect(() => {
+                let stopped = false;
+                let fallbackTimer;
                 const initClerk = async () => {
+                    if (stopped) return;
                     if (window.Clerk) {
                         try {
                             await window.Clerk.load();
@@ -470,6 +797,17 @@
                 };
 
                 initClerk();
+                if (isLocalDemoAvailable) {
+                    fallbackTimer = setTimeout(() => {
+                        if (!window.Clerk) {
+                            setIsLoading(false);
+                        }
+                    }, 2500);
+                }
+                return () => {
+                    stopped = true;
+                    if (fallbackTimer) clearTimeout(fallbackTimer);
+                };
             }, []);
 
             // Load DLA movements for the company
@@ -494,13 +832,13 @@
 
             useEffect(() => {
                 // load DLA movements when company is set or when DLA tab becomes active
-                if (data.company?.id && activeTab === 'dla') {
+                if (data.company?.id && (activeTab === 'dla' || (activeTab === 'compliance' && complianceSubTab === 'dla'))) {
                     loadDlaMovements();
                 }
-                if (data.company?.id && activeTab === 'alerts') {
+                if (data.company?.id && (activeTab === 'alerts' || (activeTab === 'compliance' && complianceSubTab === 'alerts'))) {
                     loadS455Alerts();
                 }
-            }, [data.company?.id, activeTab]);
+            }, [data.company?.id, activeTab, complianceSubTab]);
 
             async function loadS455Alerts() {
                 if (!data.company?.id) return
@@ -535,7 +873,7 @@
             // Component-scope helper to fetch Companies House registration date and calculate key dates
             async function fetchCompanyRegistrationDate() {
                 if (!data.company || !data.company.regNumber) {
-                    alert('Please enter a company registration number in Settings first.')
+                    showToast('Please enter a company registration number in Settings first.', 'warning')
                     return
                 }
                 try {
@@ -628,7 +966,7 @@
                     }))
                     
                     if (dateStr || j.accounts || j.confirmation_statement) {
-                        alert('Key dates fetched and saved successfully!')
+                        showToast('Key dates fetched and saved successfully!', 'success')
                     } else {
                         throw new Error('No date information found in Companies House response.')
                     }
@@ -656,13 +994,13 @@
                         p_movement_type: dlaForm.movement_type,
                         p_created_by: user?.primaryEmailAddress?.emailAddress || user?.email || 'system'
                     };
-                    const { data: rpcRes, error } = await supabaseClient.rpc('app.insert_dla_movement', payload);
+                    const { data: rpcRes, error } = await callAppRpc('insert_dla_movement', payload);
                     if (error) throw error;
                     setShowDlaModal(false);
                     await loadDlaMovements();
                 } catch (err) {
                     console.error('Failed to create DLA movement', err);
-                    alert('Failed to create DLA movement: ' + (err.message || err.toString()));
+                    showToast('Failed to create DLA movement: ' + (err.message || err.toString()), 'error');
                 }
             };
 
@@ -689,6 +1027,7 @@
                     document.body.setAttribute('data-theme', theme);
                     document.body.setAttribute('data-font-size', preferences.fontSize);
                     document.body.setAttribute('data-font-family', preferences.fontFamily);
+                    applyThemeTokens(theme);
                 };
                 applyTheme();
                 if (preferences.theme === 'auto') {
@@ -730,7 +1069,7 @@
                     await loadCompanyAndData();
                 } catch (error) {
                     console.error('Error in handleUserSignedIn:', error);
-                    alert(`Authentication error: ${error.message}`);
+                    showToast(`Authentication error: ${error.message}`, 'error');
                 } finally {
                     setIsLoading(false);
                 }
@@ -994,7 +1333,7 @@
                     if (error) {
                         console.error('Error creating company:', error);
                         console.error('Error details:', JSON.stringify(error, null, 2));
-                        alert(`Failed to create company: ${error.message || 'Unknown error'}`);
+                        showToast(`Failed to create company: ${error.message || 'Unknown error'}`, 'error');
                         return;
                     }
                     
@@ -1022,12 +1361,14 @@
                     await loadCompanyAndData();
                 } catch (error) {
                     console.error('Error setting up company:', error);
-                    alert('Failed to setup company. Please try again.');
+                    showToast('Failed to setup company. Please try again.', 'error');
                 }
             }
 
             const handleLogout = async () => {
-                if (clerk) {
+                if (isDemoMode) {
+                    setIsDemoMode(false);
+                } else if (clerk) {
                     await clerk.signOut();
                 }
                 setUser(null);
@@ -1049,7 +1390,7 @@
 
                     if (error) {
                         console.error('Error uploading image:', error);
-                        alert('Failed to upload image');
+                        showToast('Failed to upload image', 'error');
                         return;
                     }
 
@@ -1061,7 +1402,7 @@
                     setFormData({...formData, images: [...images, publicUrl]});
                 } catch (error) {
                     console.error('Error uploading image:', error);
-                    alert('Failed to upload image');
+                    showToast('Failed to upload image', 'error');
                 }
             };
 
@@ -1078,7 +1419,7 @@
 
                     if (error) {
                         console.error('Error uploading image:', error);
-                        alert('Failed to upload image');
+                        showToast('Failed to upload image', 'error');
                         return;
                     }
 
@@ -1128,7 +1469,7 @@
                     }
                 } catch (error) {
                     console.error('Error uploading image:', error);
-                    alert('Failed to upload image');
+                    showToast('Failed to upload image', 'error');
                 }
             };
 
@@ -1167,7 +1508,7 @@
             const handleInlineCreate = async (type) => {
                 const form = inlineFormData[type];
                 if (!form.name.trim()) {
-                    alert(`${quickAddLabels[type]} name is required`);
+                    showToast(`${quickAddLabels[type]} name is required`, 'warning');
                     return;
                 }
 
@@ -1209,7 +1550,7 @@
                     toggleInlineCreation(type, false);
                 } catch (error) {
                     console.error('Inline creation error:', error);
-                    alert(`Failed to add ${quickAddLabels[type].toLowerCase()}. Please try again.`);
+                    showToast(`Failed to add ${quickAddLabels[type].toLowerCase()}. Please try again.`, 'error');
                 } finally {
                     setInlineSaving(prev => ({ ...prev, [type]: false }));
                 }
@@ -1219,14 +1560,34 @@
                 setSettingsForm(prev => ({ ...prev, [field]: value }));
             };
 
+            const persistPreferences = (nextPreferences) => {
+                setPreferences(nextPreferences);
+                setSettingsForm(prev => ({ ...prev, ...nextPreferences }));
+                try {
+                    localStorage.setItem(PREF_STORAGE_KEY, JSON.stringify(nextPreferences));
+                } catch (storageError) {
+                    console.warn('Unable to persist preferences', storageError);
+                }
+            };
+
+            const toggleThemeMode = () => {
+                const resolvedTheme = preferences.theme === 'auto'
+                    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : preferences.theme;
+                persistPreferences({
+                    ...preferences,
+                    theme: resolvedTheme === 'dark' ? 'light' : 'dark'
+                });
+            };
+
             const handleSaveSettings = async (e) => {
                 e.preventDefault();
                 if (!user) {
-                    alert('Please sign in to update settings.');
+                    showToast('Please sign in to update settings.', 'warning');
                     return;
                 }
                 if (!settingsForm.name.trim()) {
-                    alert('Company name is required');
+                    showToast('Company name is required', 'warning');
                     return;
                 }
 
@@ -1272,16 +1633,11 @@
                         fontFamily: settingsForm.fontFamily || defaultPreferences.fontFamily
                     };
 
-                    setPreferences(normalizedPrefs);
-                    try {
-                        localStorage.setItem(PREF_STORAGE_KEY, JSON.stringify(normalizedPrefs));
-                    } catch (storageError) {
-                        console.warn('Unable to persist preferences', storageError);
-                    }
-                    alert('Settings updated successfully');
+                    persistPreferences(normalizedPrefs);
+                    showToast('Settings updated successfully', 'success');
                 } catch (error) {
                     console.error('Error saving settings:', error);
-                    alert('Failed to save settings. Please try again.');
+                    showToast('Failed to save settings. Please try again.', 'error');
                 } finally {
                     setSavingSettings(false);
                 }
@@ -1320,11 +1676,11 @@
                             quantity: 1,
                             unitPrice: 0,
                             amount: 0,
-                            includeVAT: true
+                            includeVAT: false
                         }]);
                     }
                     const subtotalVal = parseCurrencyValue(defaultData.subtotal);
-                    const vatRateVal = defaultData.vatRate !== undefined ? parseCurrencyValue(defaultData.vatRate, 0.20) : 0.20;
+                    const vatRateVal = defaultData.vatRate !== undefined ? parseCurrencyValue(defaultData.vatRate, 0) : 0;
                     const vatVal = defaultData.vat !== undefined ? parseCurrencyValue(defaultData.vat) : subtotalVal * vatRateVal;
                     const derivedDiscount = item ? (subtotalVal + vatVal - parseCurrencyValue(defaultData.total)) : 0;
                     defaultData.vatRate = vatRateVal;
@@ -1342,7 +1698,7 @@
                     }
                 } else if (type === 'bill') {
                     const subtotalVal = parseCurrencyValue(defaultData.subtotal);
-                    const vatRateVal = defaultData.vatRate !== undefined ? parseCurrencyValue(defaultData.vatRate, 0.20) : 0.20;
+                    const vatRateVal = defaultData.vatRate !== undefined ? parseCurrencyValue(defaultData.vatRate, 0) : 0;
                     const vatVal = defaultData.vat !== undefined ? parseCurrencyValue(defaultData.vat) : subtotalVal * vatRateVal;
                     const totalVal = subtotalVal + vatVal;
                     defaultData.vatRate = vatRateVal;
@@ -1364,8 +1720,122 @@
                 setLineItems([]);
             };
 
+            const getDemoCollectionKey = (type) => ({
+                customer: 'customers',
+                supplier: 'suppliers',
+                invoice: 'invoices',
+                bill: 'bills',
+                expense: 'expenses',
+                account: 'chartOfAccounts',
+                bankAccount: 'bankAccounts'
+            })[type];
+
+            const buildDemoRecord = (type) => {
+                const id = editingId || `${type}-${Date.now()}`;
+                switch (type) {
+                    case 'customer':
+                    case 'supplier':
+                        return {
+                            id,
+                            name: formData.name,
+                            email: formData.email,
+                            phone: formData.phone || '',
+                            address: formData.address || ''
+                        };
+                    case 'invoice': {
+                        const subtotal = parseFloat(formData.subtotal || 0);
+                        const vatRate = parseFloat(formData.vatRate || 0);
+                        const vat = parseFloat(formData.vat || (subtotal * vatRate));
+                        const total = parseFloat(formData.total || (subtotal + vat));
+                        return {
+                            id,
+                            customerId: formData.customerId,
+                            invoiceNumber: formData.invoiceNumber,
+                            date: formData.date || new Date().toISOString().split('T')[0],
+                            dueDate: formData.dueDate || formData.date || new Date().toISOString().split('T')[0],
+                            description: formData.description || '',
+                            subtotal,
+                            vatRate,
+                            vat,
+                            total,
+                            status: formData.status || 'unpaid',
+                            line_items: lineItems
+                        };
+                    }
+                    case 'bill': {
+                        const subtotal = parseFloat(formData.subtotal || 0);
+                        const vatRate = parseFloat(formData.vatRate || 0);
+                        const vat = parseFloat(formData.vat || (subtotal * vatRate));
+                        return {
+                            id,
+                            supplierId: formData.supplierId,
+                            billNumber: formData.billNumber,
+                            date: formData.date || new Date().toISOString().split('T')[0],
+                            dueDate: formData.dueDate || formData.date || new Date().toISOString().split('T')[0],
+                            description: formData.description || '',
+                            subtotal,
+                            vatRate,
+                            vat,
+                            total: parseFloat(formData.total || (subtotal + vat)),
+                            status: formData.status || 'unpaid',
+                            images: formData.images || []
+                        };
+                    }
+                    case 'expense':
+                        return {
+                            id,
+                            date: formData.date || new Date().toISOString().split('T')[0],
+                            category: formData.category,
+                            description: formData.description,
+                            amount: parseFloat(formData.amount || 0),
+                            paymentMethod: formData.paymentMethod || 'card',
+                            images: formData.images || []
+                        };
+                    case 'account':
+                        return {
+                            id,
+                            code: formData.code,
+                            name: formData.name,
+                            type: formData.type,
+                            balance: parseFloat(formData.balance || 0),
+                            account_code: formData.code,
+                            account_name: formData.name,
+                            account_type: (formData.type || '').toLowerCase()
+                        };
+                    case 'bankAccount':
+                        return {
+                            id,
+                            name: formData.name,
+                            bank: formData.bank,
+                            accountNumber: formData.accountNumber || '',
+                            sortCode: formData.sortCode || '',
+                            balance: parseFloat(formData.balance || 0),
+                            currency: formData.currency || 'GBP'
+                        };
+                    default:
+                        return { id, ...formData };
+                }
+            };
+
             const handleSubmit = async (e) => {
                 e.preventDefault();
+
+                if (isDemoMode) {
+                    const collectionKey = getDemoCollectionKey(modalType);
+                    const record = buildDemoRecord(modalType);
+                    if (collectionKey) {
+                        setData(prev => {
+                            const existing = prev[collectionKey] || [];
+                            const nextCollection = editingId
+                                ? existing.map(item => item.id === editingId ? record : item)
+                                : [...existing, record];
+                            return { ...prev, [collectionKey]: nextCollection };
+                        });
+                        closeModal();
+                        showToast(`${editingId ? 'Updated' : 'Created'} ${modalType} in demo workspace.`, 'success');
+                        return;
+                    }
+                }
                 
                 try {
                     await ensureSupabaseToken();
@@ -1400,7 +1870,7 @@
                             break;
                         case 'invoice':
                             const iSub = parseFloat(formData.subtotal || 0);
-                            const iRate = parseFloat(formData.vatRate || 0.20);
+                            const iRate = parseFloat(formData.vatRate || 0);
                             const iVAT = parseFloat(formData.vat || (iSub * iRate));
                             const iDiscount = Math.max(parseFloat(formData.discount || 0), 0);
                             const invoiceTotal = Math.max(iSub + iVAT - iDiscount, 0);
@@ -1435,7 +1905,7 @@
                             break;
                         case 'bill':
                             const bSub = parseFloat(formData.subtotal || 0);
-                            const bRate = parseFloat(formData.vatRate || 0.20);
+                            const bRate = parseFloat(formData.vatRate || 0);
                             const bVAT = parseFloat(formData.vat || (bSub * bRate));
                             if (editingId) {
                                 await supabaseClient.from('bills').update({
@@ -1534,12 +2004,30 @@
                     closeModal();
                 } catch (error) {
                     console.error('Error saving:', error);
-                    alert('Failed to save. Please try again.');
+                    showToast('Failed to save. Please try again.', 'error');
                 }
             };
 
             const handleDelete = async (type, id) => {
-                if (!confirm('Are you sure you want to delete this item?')) return;
+                const confirmed = await requestConfirm({
+                    title: 'Delete item?',
+                    message: 'This item will be removed from your records.',
+                    confirmText: 'Delete',
+                    tone: 'danger'
+                });
+                if (!confirmed) return;
+
+                if (isDemoMode) {
+                    const collectionKey = getDemoCollectionKey(type);
+                    if (collectionKey) {
+                        setData(prev => ({
+                            ...prev,
+                            [collectionKey]: (prev[collectionKey] || []).filter(item => item.id !== id)
+                        }));
+                        showToast('Deleted item from demo workspace.', 'success');
+                        return;
+                    }
+                }
                 
                 try {
                     await ensureSupabaseToken();
@@ -1554,7 +2042,7 @@
                     await loadCompanyAndData();
                 } catch (error) {
                     console.error('Error deleting:', error);
-                    alert('Failed to delete. Please try again.');
+                    showToast('Failed to delete. Please try again.', 'error');
                 }
             };
 
@@ -1582,15 +2070,21 @@
                     });
                     
                     await loadCompanyAndData();
-                    alert(`VAT Return Generated!\nOutput VAT: £${outputVAT.toFixed(2)}\nInput VAT: £${inputVAT.toFixed(2)}\nVAT Due: £${vatDue.toFixed(2)}\n\nStatus: Draft - Review and file when ready`);
+                    showToast(`VAT Return generated.\nOutput VAT: £${outputVAT.toFixed(2)}\nInput VAT: £${inputVAT.toFixed(2)}\nVAT Due: £${vatDue.toFixed(2)}\nStatus: Draft - review and file when ready.`, 'success', { timeout: 7000 });
                 } catch (error) {
                     console.error('Error generating VAT return:', error);
-                    alert('Failed to generate VAT return.');
+                    showToast('Failed to generate VAT return.', 'error');
                 }
             };
 
             const fileVATReturn = async (id) => {
-                if (!confirm('Are you sure you want to file this VAT return? This action marks it as filed.')) return;
+                const confirmed = await requestConfirm({
+                    title: 'File VAT return?',
+                    message: 'This action marks the VAT return as filed.',
+                    confirmText: 'File VAT return',
+                    tone: 'primary'
+                });
+                if (!confirmed) return;
                 try {
                     await ensureSupabaseToken();
                     await supabaseClient.from('vat_returns').update({
@@ -1598,10 +2092,10 @@
                         filed_date: new Date().toISOString().split('T')[0]
                     }).eq('id', id);
                     await loadCompanyAndData();
-                    alert('VAT Return filed successfully!');
+                    showToast('VAT return filed successfully!', 'success');
                 } catch (error) {
                     console.error('Error filing VAT return:', error);
-                    alert('Failed to file VAT return.');
+                    showToast('Failed to file VAT return.', 'error');
                 }
             };
 
@@ -2019,7 +2513,7 @@
             const emailInvoice = (invoice) => {
                 const customer = data.customers.find(c => c.id == invoice.customerId);
                 if (!customer || !customer.email) {
-                    alert('Customer email not found!');
+                    showToast('Customer email not found!', 'warning');
                     return;
                 }
                 
@@ -2067,8 +2561,8 @@
                                 const paidOut = parseFloat(parts[7].replace(/,/g, '')) || 0;
                                 const amount = paidIn > 0 ? paidIn : -paidOut;
                                 
-                                transactions.push({
-                                    date: parts[0].replace(/'/g, '').split(' ')[0], // Remove leading apostrophe and time
+                                const parsedTransaction = {
+                                    date: normalizeBankDate(parts[0]),
                                     transaction_id: parts[1].replace(/'/g, ''),
                                     description: parts[2],
                                     reference: parts[3],
@@ -2082,39 +2576,84 @@
                                     transaction_type: parts[9],
                                     status: parts[10],
                                     initiated_by: parts[11],
+                                    reconciled: false,
+                                    matched_type: 'unmatched',
                                     clerk_user_id: user?.id || user?.primaryEmailAddress?.emailAddress || 'unknown'
-                                });
+                                };
+                                transactions.push(parsedTransaction);
                             }
                         }
                         
                         if (transactions.length === 0) {
-                            alert('No transactions found in CSV file.');
+                            showToast('No transactions found in CSV file.', 'warning');
+                            return;
+                        }
+
+                        const existingFingerprints = new Set((data.bankTransactions || []).map(makeBankFingerprint));
+                        const seenInFile = new Set();
+                        const uniqueTransactions = [];
+                        let duplicateCount = 0;
+                        transactions.forEach(transaction => {
+                            const fingerprint = makeBankFingerprint(transaction);
+                            if (existingFingerprints.has(fingerprint) || seenInFile.has(fingerprint)) {
+                                duplicateCount += 1;
+                                return;
+                            }
+                            seenInFile.add(fingerprint);
+                            uniqueTransactions.push(transaction);
+                        });
+
+                        if (uniqueTransactions.length === 0) {
+                            setBankImportSummary({
+                                imported: 0,
+                                skipped: duplicateCount,
+                                total: transactions.length,
+                                fileName: file.name
+                            });
+                            showToast(`No new transactions imported. ${duplicateCount} duplicate transaction${duplicateCount === 1 ? '' : 's'} skipped.`, 'info');
+                            e.target.value = '';
                             return;
                         }
                         
-                        // Save to Supabase
-                        await ensureSupabaseToken();
-                        const { data: insertedData, error } = await supabaseClient
-                            .from('bank_transactions')
-                            .insert(transactions)
-                            .select();
-                        
-                        if (error) {
-                            console.error('Error saving transactions:', error);
-                            alert(`Error saving transactions: ${error.message}`);
-                            return;
+                        if (isDemoMode) {
+                            const localRows = uniqueTransactions.map((transaction, idx) => ({
+                                ...transaction,
+                                id: `import-${Date.now()}-${idx}`
+                            }));
+                            setData(prev => ({
+                                ...prev,
+                                bankTransactions: [...localRows, ...prev.bankTransactions]
+                            }));
+                        } else {
+                            await ensureSupabaseToken();
+                            const { data: insertedData, error } = await supabaseClient
+                                .from('bank_transactions')
+                                .insert(uniqueTransactions)
+                                .select();
+                            
+                            if (error) {
+                                console.error('Error saving transactions:', error);
+                                showToast(`Error saving transactions: ${error.message}`, 'error');
+                                return;
+                            }
+                            
+                            setData(prev => ({
+                                ...prev,
+                                bankTransactions: [...(insertedData || []), ...prev.bankTransactions]
+                            }));
                         }
-                        
-                        // Update local state
-                        setData(prev => ({
-                            ...prev,
-                            bankTransactions: [...prev.bankTransactions, ...(insertedData || [])]
-                        }));
-                        
-                        alert(`Successfully imported ${transactions.length} transactions from Tide!`);
+
+                        setBankImportSummary({
+                            imported: uniqueTransactions.length,
+                            skipped: duplicateCount,
+                            total: transactions.length,
+                            fileName: file.name
+                        });
+                        showToast(`Imported ${uniqueTransactions.length} new transaction${uniqueTransactions.length === 1 ? '' : 's'}. Skipped ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'}.`, 'success');
+                        e.target.value = '';
                     } catch (error) {
                         console.error('CSV import error:', error);
-                        alert('Error importing CSV file. Please check the format.');
+                        showToast('Error importing CSV file. Please check the format.', 'error');
                     }
                 };
                 reader.readAsText(file);
@@ -2141,13 +2680,126 @@
                 result.push(current.trim());
                 return result;
             };
+
+            const normalizeBankDate = (value) => {
+                if (!value) return '';
+                const cleaned = String(value).replace(/'/g, '').trim().split(' ')[0];
+                if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return cleaned;
+                const slash = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if (slash) {
+                    return `${slash[3]}-${slash[2].padStart(2, '0')}-${slash[1].padStart(2, '0')}`;
+                }
+                const parsed = new Date(cleaned);
+                return Number.isNaN(parsed.getTime()) ? cleaned : parsed.toISOString().split('T')[0];
+            };
+
+            const getBankAmount = (txn) => {
+                const paidIn = parseFloat(txn?.paid_in ?? txn?.paidIn ?? 0) || 0;
+                const paidOut = parseFloat(txn?.paid_out ?? txn?.paidOut ?? 0) || 0;
+                if (paidIn > 0) return paidIn;
+                if (paidOut > 0) return -paidOut;
+                return parseFloat(txn?.amount || 0) || 0;
+            };
+
+            const makeBankFingerprint = (txn) => {
+                const transactionId = String(txn?.transaction_id || txn?.transactionId || '').trim().toLowerCase();
+                if (transactionId) return `id:${transactionId}`;
+                const date = normalizeBankDate(txn?.date);
+                const description = String(txn?.description || '').replace(/\s+/g, ' ').trim().toLowerCase();
+                const reference = String(txn?.reference || '').replace(/\s+/g, ' ').trim().toLowerCase();
+                const amount = getBankAmount(txn).toFixed(2);
+                return `row:${date}|${description}|${reference}|${amount}`;
+            };
+
+            const getTransactionDirection = (txn) => {
+                const amount = getBankAmount(txn);
+                if (amount > 0) return 'income';
+                if (amount < 0) return 'outgoing';
+                return 'neutral';
+            };
+
+            const findBankMatchCandidates = (txn) => {
+                const amount = Math.abs(getBankAmount(txn));
+                const direction = getTransactionDirection(txn);
+                const txnDate = normalizeBankDate(txn.date);
+                const text = `${txn.description || ''} ${txn.reference || ''}`.toLowerCase();
+                const dayDistance = (dateValue) => {
+                    if (!txnDate || !dateValue) return 999;
+                    const left = new Date(txnDate);
+                    const right = new Date(normalizeBankDate(dateValue));
+                    if (Number.isNaN(left.getTime()) || Number.isNaN(right.getTime())) return 999;
+                    return Math.abs(Math.round((left - right) / 86400000));
+                };
+                const scoreCandidate = ({ type, record, name, amountValue, dateValue, status }) => {
+                    const amountDiff = Math.abs(amount - Math.abs(parseFloat(amountValue || 0)));
+                    if (amountDiff > Math.max(1, amount * 0.03)) return null;
+                    let score = 65;
+                    if (amountDiff < 0.01) score += 20;
+                    const days = dayDistance(dateValue);
+                    if (days <= 3) score += 10;
+                    if (days <= 14) score += 5;
+                    const referenceText = `${name || ''} ${record?.billNumber || record?.bill_number || ''} ${record?.invoiceNumber || record?.invoice_number || ''} ${record?.description || ''}`.toLowerCase();
+                    if (referenceText && text && referenceText.split(/\s+/).some(word => word.length > 3 && text.includes(word))) score += 8;
+                    return {
+                        id: `${type}-${record.id}`,
+                        recordId: record.id,
+                        type,
+                        name,
+                        reference: record.billNumber || record.bill_number || record.invoiceNumber || record.invoice_number || record.description || type,
+                        amount: Math.abs(parseFloat(amountValue || 0)),
+                        date: dateValue,
+                        status,
+                        score: Math.min(99, score)
+                    };
+                };
+                const candidates = [];
+                if (direction === 'outgoing') {
+                    data.expenses.forEach(expense => {
+                        const candidate = scoreCandidate({
+                            type: 'expense',
+                            record: expense,
+                            name: expense.description || expense.category || 'Expense',
+                            amountValue: expense.amount,
+                            dateValue: expense.date,
+                            status: 'posted'
+                        });
+                        if (candidate) candidates.push(candidate);
+                    });
+                    data.bills.forEach(bill => {
+                        const supplier = data.suppliers.find(s => s.id == bill.supplierId || s.id == bill.supplier_id);
+                        const candidate = scoreCandidate({
+                            type: 'bill',
+                            record: bill,
+                            name: supplier?.name || 'Purchase bill',
+                            amountValue: bill.total,
+                            dateValue: bill.date,
+                            status: bill.status || 'unpaid'
+                        });
+                        if (candidate) candidates.push(candidate);
+                    });
+                }
+                if (direction === 'income') {
+                    data.invoices.forEach(invoice => {
+                        const customer = data.customers.find(c => c.id == invoice.customerId || c.id == invoice.customer_id);
+                        const candidate = scoreCandidate({
+                            type: 'invoice',
+                            record: invoice,
+                            name: customer?.name || 'Sales invoice',
+                            amountValue: invoice.total,
+                            dateValue: invoice.date,
+                            status: invoice.status || 'unpaid'
+                        });
+                        if (candidate) candidates.push(candidate);
+                    });
+                }
+                return candidates.sort((a, b) => b.score - a.score).slice(0, 3);
+            };
             
             // Auto-categorize transactions using rules
             const autoCategorizeTransactions = async () => {
                 try {
                     await ensureSupabaseToken();
-                    const { data: results, error } = await supabaseClient
-                        .rpc('app.auto_categorize_transactions', {
+                    const { data: results, error } = await callAppRpc('auto_categorize_transactions', {
                             p_company_id: data.company?.id
                         });
                     
@@ -2160,20 +2812,21 @@
                         .eq('company_id', data.company?.id);
                     
                     setData(prev => ({ ...prev, bankTransactions: updated || [] }));
-                    alert(`Successfully categorized ${results?.length || 0} transactions!`);
+                    showToast(`Categorized ${results?.length || 0} transaction${results?.length === 1 ? '' : 's'}.`, 'success');
                 } catch (error) {
                     console.error('Auto-categorize error:', error);
-                    alert('Error auto-categorizing: ' + error.message);
+                    showToast('Error auto-categorizing: ' + error.message, 'error');
                 }
             };
             
             // Open reconciliation modal for a transaction
             const openReconcileModal = (transaction) => {
+                const suggestedMatch = findBankMatchCandidates(transaction)[0];
                 setSelectedTransaction(transaction);
                 setReconcileForm({
-                    matched_type: transaction.matched_type || 'unmatched',
-                    matched_invoice_id: transaction.matched_invoice_id || '',
-                    notes: transaction.notes || '',
+                    matched_type: transaction.matched_type && transaction.matched_type !== 'unmatched' ? transaction.matched_type : (suggestedMatch?.type || 'unmatched'),
+                    matched_invoice_id: transaction.matched_invoice_id || (suggestedMatch?.type === 'invoice' ? suggestedMatch.recordId : ''),
+                    notes: transaction.notes || (suggestedMatch ? `Suggested match: ${suggestedMatch.type} ${suggestedMatch.reference} (${suggestedMatch.score}% confidence)` : ''),
                     account_code: transaction.suggested_category || '1000'
                 });
                 setShowReconcileModal(true);
@@ -2182,10 +2835,26 @@
             // Reconcile a transaction
             const reconcileTransaction = async () => {
                 try {
+                    if (isDemoMode) {
+                        setData(prev => ({
+                            ...prev,
+                            bankTransactions: prev.bankTransactions.map(txn => txn.id === selectedTransaction.id ? {
+                                ...txn,
+                                reconciled: true,
+                                matched_type: reconcileForm.matched_type,
+                                matched_invoice_id: reconcileForm.matched_invoice_id || null,
+                                notes: reconcileForm.notes,
+                                account_code: reconcileForm.account_code
+                            } : txn)
+                        }));
+                        setShowReconcileModal(false);
+                        return;
+                    }
+
                     await ensureSupabaseToken();
                     
                     // First, reconcile the transaction
-                    const { error: reconcileError } = await supabaseClient.rpc('app.reconcile_bank_transaction', {
+                    const { error: reconcileError } = await callAppRpc('reconcile_bank_transaction', {
                         p_transaction_id: selectedTransaction.id,
                         p_company_id: data.company?.id,
                         p_matched_invoice_id: reconcileForm.matched_invoice_id || null,
@@ -2198,7 +2867,7 @@
                     
                     // If account code provided, create journal entry
                     if (reconcileForm.account_code) {
-                        const { error: journalError } = await supabaseClient.rpc('app.create_journal_entry_from_bank_transaction', {
+                        const { error: journalError } = await callAppRpc('create_journal_entry_from_bank_transaction', {
                             p_transaction_id: selectedTransaction.id,
                             p_company_id: data.company?.id,
                             p_account_code: reconcileForm.account_code,
@@ -2216,10 +2885,10 @@
                     
                     setData(prev => ({ ...prev, bankTransactions: updated || [] }));
                     setShowReconcileModal(false);
-                    alert('Transaction reconciled successfully!');
+                    showToast('Transaction reconciled successfully!', 'success');
                 } catch (error) {
                     console.error('Reconcile error:', error);
-                    alert('Error reconciling: ' + error.message);
+                    showToast('Error reconciling: ' + getFriendlyRpcError(error, 'reconcile_bank_transaction'), 'error', { timeout: 9000 });
                 }
             };
             
@@ -2260,16 +2929,22 @@
                         assign_account_code: '',
                         assign_matched_type: 'expense'
                     });
-                    alert('Rule added successfully!');
+                    showToast('Rule added successfully!', 'success');
                 } catch (error) {
                     console.error('Add rule error:', error);
-                    alert('Error adding rule: ' + error.message);
+                    showToast('Error adding rule: ' + error.message, 'error');
                 }
             };
             
             // Delete categorization rule
             const deleteRule = async (ruleId) => {
-                if (!confirm('Delete this categorization rule?')) return;
+                const confirmed = await requestConfirm({
+                    title: 'Delete rule?',
+                    message: 'This categorization rule will stop applying to future bank transactions.',
+                    confirmText: 'Delete rule',
+                    tone: 'danger'
+                });
+                if (!confirmed) return;
                 try {
                     await ensureSupabaseToken();
                     const { error } = await supabaseClient
@@ -2285,7 +2960,7 @@
                     }));
                 } catch (error) {
                     console.error('Delete rule error:', error);
-                    alert('Error deleting rule: ' + error.message);
+                    showToast('Error deleting rule: ' + error.message, 'error');
                 }
             };
 
@@ -2306,9 +2981,9 @@
                     reader.onload = (event) => {
                         try {
                             saveData(JSON.parse(event.target.result));
-                            alert('Import successful!');
+                            showToast('Import successful!', 'success');
                         } catch {
-                            alert('Error importing file');
+                            showToast('Error importing file', 'error');
                         }
                     };
                     reader.readAsText(file);
@@ -2392,7 +3067,7 @@
                     quantity: 1, 
                     unitPrice: 0, 
                     amount: 0,
-                    includeVAT: true  // Default to include VAT
+                    includeVAT: false
                 }]);
             };
 
@@ -2422,7 +3097,8 @@
                     .filter(item => item.includeVAT)
                     .reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
                 
-                const vatAmount = vatableAmount * 0.20;
+                const vatRate = parseCurrencyValue(formData.vatRate, 0);
+                const vatAmount = vatableAmount * vatRate;
                 
                 // Total = Subtotal + VAT Amount
                 const total = subtotal + vatAmount;
@@ -2432,7 +3108,7 @@
                     subtotal: subtotal.toFixed(2),
                     vat: vatAmount.toFixed(2),
                     total: total.toFixed(2),
-                    vatRate: '0.20'
+                    vatRate: String(vatRate)
                 }));
             };
 
@@ -2457,6 +3133,15 @@
                         redirectUrl: window.location.href
                     });
                 }
+            };
+
+            const enterLocalDemo = () => {
+                setIsDemoMode(true);
+                setUser(demoUser);
+                setSubscription({ subscription_tier: 'demo', subscription_status: 'active' });
+                setShowCompanySetup(false);
+                setData(demoData);
+                setActiveTab('dashboard');
             };
 
             const metrics = {
@@ -2536,22 +3221,22 @@
 
             if (!user) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+                    <div className="min-h-screen flex items-center justify-center p-4" style={{background: 'linear-gradient(135deg, #07111f 0%, #0f2742 56%, #0f3f3a 100%)'}}>
                         <div className="w-full max-w-md">
-                            <div className="bg-white rounded-2xl shadow-2xl p-10">
+                            <div className="bg-white rounded-xl shadow-2xl p-8 border border-slate-200">
                                 <div className="text-center mb-8">
-                                    <h1 className="text-4xl font-bold mb-2" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>
+                                    <img src="/icon-192.svg" alt="" className="mx-auto mb-4 h-14 w-14 rounded-2xl shadow-lg" />
+                                    <h1 className="text-4xl font-bold mb-2 text-slate-950">
                                         SwenBooks
                                     </h1>
-                                    <p className="text-xl text-gray-800 font-semibold mb-2">Modern Accounting Software</p>
-                                    <p className="text-gray-600">Welcome back! Sign in to continue</p>
+                                    <p className="text-lg text-gray-800 font-semibold mb-2">Accounting workspace for UK limited companies</p>
+                                    <p className="text-gray-600">Sign in to manage invoices, expenses, bills and filing dates.</p>
                                 </div>
                                 {clerk ? (
                                     <div className="space-y-4">
                                         <button
                                             onClick={handleSignIn}
-                                            className="w-full text-white font-semibold py-4 px-6 rounded-lg transition duration-200 shadow-lg hover:opacity-90"
-                                            style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}
+                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-200 shadow-lg"
                                         >
                                             Sign In to Your Account
                                         </button>
@@ -2563,27 +3248,45 @@
                                             Create New Account
                                         </button>
                                         <div className="mt-6 pt-6 border-t border-gray-200">
-                                            <div className="flex items-center justify-center space-x-2 text-green-600 mb-2">
+                                            <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
                                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                                                 </svg>
-                                                <span className="font-semibold">Completely Free</span>
+                                                <span className="font-semibold">Built for director-led businesses</span>
                                             </div>
-                                            <p className="text-sm text-center text-gray-600">
-                                                Unlimited invoices • Expense tracking<br/>
-                                                Real-time reports • MTD ready
+                                        <p className="text-sm text-center text-gray-600">
+                                                Sales invoices, expenses and purchase bills<br/>
+                                                Bank reconciliation, reports and key dates
                                             </p>
                                         </div>
+                                        {isLocalDemoAvailable && (
+                                            <button
+                                                type="button"
+                                                onClick={enterLocalDemo}
+                                                className="w-full border border-blue-200 bg-blue-50 text-blue-800 font-semibold py-3 px-6 rounded-lg hover:bg-blue-100"
+                                            >
+                                                Preview logged-in workspace
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
-                                    <div className="text-center text-gray-600">
+                                    <div className="text-center text-gray-600 space-y-4">
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                                         <p className="mt-4">Loading...</p>
+                                        {isLocalDemoAvailable && (
+                                            <button
+                                                type="button"
+                                                onClick={enterLocalDemo}
+                                                className="w-full border border-blue-200 bg-blue-50 text-blue-800 font-semibold py-3 px-6 rounded-lg hover:bg-blue-100"
+                                            >
+                                                Preview logged-in workspace
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
                             <p className="text-center text-white text-sm mt-6 opacity-90">
-                                Trusted by UK businesses • Bank-level security • Cloud-based
+                                UK limited company records • Director loans • Companies House and HMRC dates
                             </p>
                         </div>
                     </div>
@@ -2661,6 +3364,161 @@
                 );
             }
 
+            const renderReconcileModal = () => {
+                if (!showReconcileModal) return null;
+                const suggestedMatch = selectedTransaction ? findBankMatchCandidates(selectedTransaction)[0] : null;
+                const invoiceMatches = selectedTransaction ? findBankMatchCandidates(selectedTransaction).filter(match => match.type === 'invoice') : [];
+                const invoiceById = new Map((data.invoices || []).map(invoice => [String(invoice.id), invoice]));
+                const invoiceOptionIds = new Set();
+                invoiceMatches.forEach(match => {
+                    if (match.recordId !== undefined && match.recordId !== null) invoiceOptionIds.add(String(match.recordId));
+                });
+                if (reconcileForm.matched_invoice_id) invoiceOptionIds.add(String(reconcileForm.matched_invoice_id));
+                (data.invoices || [])
+                    .filter(invoice => String(invoice.status || 'unpaid').toLowerCase() !== 'paid')
+                    .forEach(invoice => invoiceOptionIds.add(String(invoice.id)));
+                const invoiceOptions = Array.from(invoiceOptionIds)
+                    .map(id => {
+                        const invoice = invoiceById.get(id);
+                        if (!invoice) return null;
+                        const match = invoiceMatches.find(candidate => String(candidate.recordId) === id);
+                        return { invoice, match };
+                    })
+                    .filter(Boolean)
+                    .sort((left, right) => {
+                        const scoreDiff = (right.match?.score || 0) - (left.match?.score || 0);
+                        if (scoreDiff !== 0) return scoreDiff;
+                        const leftDate = new Date(normalizeBankDate(left.invoice.date || left.invoice.invoice_date || '')).getTime() || 0;
+                        const rightDate = new Date(normalizeBankDate(right.invoice.date || right.invoice.invoice_date || '')).getTime() || 0;
+                        return rightDate - leftDate;
+                    });
+                const formatInvoiceOption = ({ invoice, match }) => {
+                    const invoiceNumber = invoice.invoiceNumber || invoice.invoice_number || 'Invoice';
+                    const customerId = invoice.customerId || invoice.customer_id;
+                    const customer = (data.customers || []).find(c => c.id == customerId);
+                    const total = parseFloat(invoice.total || 0) || 0;
+                    const status = String(invoice.status || 'unpaid').toLowerCase();
+                    const prefix = match ? `Suggested ${match.score}% - ` : '';
+                    return `${prefix}${invoiceNumber} - ${customer?.name || 'Customer'} - £${total.toLocaleString()} - ${status}`;
+                };
+                const transactionAmount = selectedTransaction ? getBankAmount(selectedTransaction) : 0;
+                return (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                            <div className="sticky top-0 bg-white border-b px-5 py-4 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">Reconcile Transaction</h3>
+                                    <p className="text-sm text-gray-600">Confirm what this bank line relates to.</p>
+                                </div>
+                                <button onClick={() => setShowReconcileModal(false)} className="text-gray-500 hover:text-gray-700">
+                                    <Icon name="X" className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <form onSubmit={(e) => { e.preventDefault(); reconcileTransaction(); }} className="p-5 space-y-4">
+                                {selectedTransaction && (
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
+                                        <p className="font-semibold text-gray-900">{selectedTransaction.description}</p>
+                                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-gray-600">
+                                            <span>{normalizeBankDate(selectedTransaction.date) ? new Date(normalizeBankDate(selectedTransaction.date)).toLocaleDateString('en-GB') : 'No date'}</span>
+                                            <span className={`text-base font-bold ${transactionAmount >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                                                {transactionAmount >= 0 ? '+' : '-'}£{Math.abs(transactionAmount).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {suggestedMatch && (
+                                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
+                                        <p className="font-semibold text-blue-900">Suggested match</p>
+                                        <p className="mt-1 text-blue-800 capitalize">
+                                            {suggestedMatch.type}: {suggestedMatch.reference} · £{suggestedMatch.amount.toFixed(2)} · {suggestedMatch.score}% confidence
+                                        </p>
+                                    </div>
+                                )}
+
+                                <label className="block text-sm font-semibold text-gray-700">
+                                    Transaction Type
+                                    <select
+                                        className="mt-1 w-full rounded-lg border border-gray-300 p-2"
+                                        value={reconcileForm.matched_type}
+                                        onChange={e => setReconcileForm(prev => ({ ...prev, matched_type: e.target.value }))}
+                                    >
+                                        <option value="unmatched">Unmatched</option>
+                                        <option value="invoice">Match to Invoice</option>
+                                        <option value="bill">Match to Bill</option>
+                                        <option value="expense">Expense</option>
+                                        <option value="transfer">Internal Transfer</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </label>
+
+                                {reconcileForm.matched_type === 'invoice' && (
+                                    <label className="block text-sm font-semibold text-gray-700">
+                                        Select Invoice
+                                        <select
+                                            className="mt-1 w-full rounded-lg border border-gray-300 p-2"
+                                            value={reconcileForm.matched_invoice_id}
+                                            onChange={e => setReconcileForm(prev => ({ ...prev, matched_invoice_id: e.target.value }))}
+                                        >
+                                            <option value="">Select invoice...</option>
+                                            {invoiceOptions.map(option => (
+                                                <option key={option.invoice.id} value={option.invoice.id}>
+                                                    {formatInvoiceOption(option)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {invoiceMatches.length > 0 && (
+                                            <span className="mt-1 block text-xs font-normal text-blue-700">
+                                                Suggested invoices are shown first, even if already marked paid, so the bank match can be reviewed or corrected.
+                                            </span>
+                                        )}
+                                    </label>
+                                )}
+
+                                <label className="block text-sm font-semibold text-gray-700">
+                                    Account Code
+                                    <select
+                                        className="mt-1 w-full rounded-lg border border-gray-300 p-2"
+                                        value={reconcileForm.account_code}
+                                        onChange={e => setReconcileForm(prev => ({ ...prev, account_code: e.target.value }))}
+                                    >
+                                        <option value="">Select account...</option>
+                                        {data.chartOfAccounts.map(acc => (
+                                            <option key={acc.id} value={acc.account_code || acc.code}>
+                                                {acc.account_code || acc.code} - {acc.account_name || acc.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label className="block text-sm font-semibold text-gray-700">
+                                    Notes
+                                    <textarea
+                                        className="mt-1 w-full rounded-lg border border-gray-300 p-2"
+                                        value={reconcileForm.notes}
+                                        onChange={e => setReconcileForm(prev => ({ ...prev, notes: e.target.value }))}
+                                        placeholder="Optional notes about this reconciliation..."
+                                    />
+                                </label>
+
+                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                                    <strong>What happens:</strong> this bank transaction is marked as reconciled and linked to the selected type, so it moves out of Needs review.
+                                </div>
+
+                                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                                    <button type="button" onClick={() => setShowReconcileModal(false)} className="btn btn-secondary">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn btn-success">
+                                        Mark as Reconciled
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
             // Render Modal
             const renderModal = () => {
                 if (!showModal) return null;
@@ -2684,8 +3542,8 @@
                         {name: 'date', label: 'Date', type: 'date', required: true},
                         {name: 'dueDate', label: 'Due Date', type: 'date', required: true},
                         {name: 'subtotal', label: 'Subtotal (£)', type: 'number', required: true, step: '0.01', readOnly: true},
-                        {name: 'vatRate', label: 'VAT Rate (always 20%)', type: 'number', required: true, step: '0.01', defaultValue: 0.20, readOnly: true},
-                        {name: 'vat', label: 'VAT Amount (£)', type: 'number', required: true, step: '0.01', readOnly: true},
+                        {name: 'vatRate', label: 'VAT Rate (0 if not VAT registered)', type: 'number', required: true, step: '0.01', defaultValue: 0},
+                        {name: 'vat', label: 'VAT Charged (£)', type: 'number', required: true, step: '0.01', readOnly: true},
                         {name: 'status', label: 'Status', type: 'select', options: [{id: 'unpaid', name: 'Unpaid'}, {id: 'paid', name: 'Paid'}, {id: 'overdue', name: 'Overdue'}]},
                         {name: 'total', label: 'Total (£)', type: 'number', readOnly: true}
                     ],
@@ -2695,13 +3553,13 @@
                         {name: 'date', label: 'Date', type: 'date', required: true},
                         {name: 'dueDate', label: 'Due Date', type: 'date', required: true},
                         {name: 'description', label: 'Description', type: 'textarea'},
-                        {name: 'subtotal', label: 'Subtotal (£)', type: 'number', required: true, step: '0.01', onChange: (val) => {
+                        {name: 'subtotal', label: 'Gross amount paid/owed (£)', type: 'number', required: true, step: '0.01', onChange: (val) => {
                             updateBillAmounts({ subtotal: val });
                         }},
-                        {name: 'vatRate', label: 'VAT Rate (e.g. 0.20 for 20%)', type: 'number', required: true, step: '0.01', defaultValue: 0.20, onChange: (val) => {
+                        {name: 'vatRate', label: 'VAT Rate (0 if not VAT registered)', type: 'number', required: true, step: '0.01', defaultValue: 0, onChange: (val) => {
                             updateBillAmounts({ vatRate: val });
                         }},
-                        {name: 'vat', label: 'VAT Amount (£)', type: 'number', required: true, step: '0.01', readOnly: true},
+                        {name: 'vat', label: 'VAT Reclaim (£)', type: 'number', required: true, step: '0.01', readOnly: true},
                         {name: 'total', label: 'Total (£)', type: 'number', readOnly: true},
                         {name: 'status', label: 'Status', type: 'select', options: [{id: 'unpaid', name: 'Unpaid'}, {id: 'paid', name: 'Paid'}, {id: 'overdue', name: 'Overdue'}]},
                         {name: 'images', label: 'Bill Images/PDFs', type: 'file-images'}
@@ -2714,7 +3572,7 @@
                             {id: 'other', name: 'Other'}
                         ], required: true},
                         {name: 'description', label: 'Description', type: 'text', required: true},
-                        {name: 'amount', label: 'Amount (£)', type: 'number', required: true, step: '0.01'},
+                        {name: 'amount', label: 'Gross amount paid (£)', type: 'number', required: true, step: '0.01'},
                         {name: 'paymentMethod', label: 'Payment Method', type: 'select', options: [
                             {id: 'cash', name: 'Cash'}, {id: 'card', name: 'Card'}, {id: 'bank', name: 'Bank Transfer'}
                         ]},
@@ -2752,6 +3610,16 @@
                                 </button>
                             </div>
                             <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4">
+                                {modalType === 'expense' && (
+                                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                                        Record the gross amount actually paid. For a non-VAT-registered company, VAT is treated as part of the cost.
+                                    </div>
+                                )}
+                                {modalType === 'bill' && (
+                                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">
+                                        Use this for a supplier invoice that still needs paying. If it was already paid at checkout, use Expense.
+                                    </div>
+                                )}
                                 {(() => {
                                     const renderFieldBlock = (field, keyOverride) => {
                                         if (!field) return null;
@@ -2805,6 +3673,7 @@
                                                     </div>
                                                 ) : field.type === 'textarea' ? (
                                                     <textarea
+                                                        name={field.name}
                                                         value={formData[field.name] || ''}
                                                         onChange={(e) => setFormData({...formData, [field.name]: e.target.value})}
                                                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -2814,6 +3683,7 @@
                                                 ) : field.type === 'select' ? (
                                                     <div className="space-y-2">
                                                         <select
+                                                            name={field.name}
                                                             value={formData[field.name] || ''}
                                                             onChange={(e) => setFormData({...formData, [field.name]: e.target.value})}
                                                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -2879,6 +3749,7 @@
                                                     </div>
                                                 ) : (
                                                     <input
+                                                        name={field.name}
                                                         type={field.type}
                                                         value={formData[field.name] !== undefined ? formData[field.name] : (field.defaultValue !== undefined ? field.defaultValue : '')}
                                                         onChange={(e) => {
@@ -3162,21 +4033,42 @@
                 );
             };
 
-            const menuItems = [
-                {id: 'dashboard', icon: 'Home', label: 'Dashboard'},
-                {id: 'reports', icon: 'BarChart3', label: 'Reports'},
-                {id: 'customers', icon: 'Users', label: 'Customers'},
-                {id: 'suppliers', icon: 'Users', label: 'Suppliers'},
-                {id: 'invoices', icon: 'FileText', label: 'Sales Invoices'},
-                {id: 'dla', icon: 'DollarSign', label: "DLA Movements"},
-                {id: 'keydates', icon: 'Calendar', label: 'Key Dates'},
-                {id: 'alerts', icon: 'AlertCircle', label: 'Alerts'},
-                {id: 'bills', icon: 'Receipt', label: 'Purchase Bills'},
-                {id: 'expenses', icon: 'CreditCard', label: 'Expenses'},
-                {id: 'banking', icon: 'PiggyBank', label: 'Banking'},
-                {id: 'accounts', icon: 'BarChart3', label: 'Chart of Accounts'},
-                {id: 'vat', icon: 'FileCheck', label: 'VAT Returns'},
-                {id: 'settings', icon: 'Settings', label: 'Settings'}
+            const menuGroups = [
+                {
+                    label: 'Workspace',
+                    items: [
+                        {id: 'dashboard', icon: 'Home', label: 'Dashboard'},
+                        {id: 'reports', icon: 'BarChart3', label: 'Reports'}
+                    ]
+                },
+                {
+                    label: 'Money',
+                    items: [
+                        {id: 'banking', icon: 'PiggyBank', label: 'Banking'},
+                        {id: 'invoices', icon: 'FileText', label: 'Sales Invoices'},
+                        {id: 'expenses', icon: 'CreditCard', label: 'Expenses'},
+                        {id: 'bills', icon: 'Receipt', label: 'Purchase Bills'}
+                    ]
+                },
+                {
+                    label: 'People',
+                    items: [
+                        {id: 'people', icon: 'Users', label: 'People'}
+                    ]
+                },
+                {
+                    label: 'Compliance',
+                    items: [
+                        {id: 'compliance', icon: 'FileCheck', label: 'Compliance'}
+                    ]
+                },
+                {
+                    label: 'System',
+                    items: [
+                        {id: 'accounts', icon: 'BarChart3', label: 'Chart of Accounts'},
+                        {id: 'settings', icon: 'Settings', label: 'Settings'}
+                    ]
+                }
             ];
 
             const unpaidInvoices = data.invoices.filter(i => i.status !== 'paid');
@@ -3236,6 +4128,42 @@
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .slice(0, 5);
 
+            const enrichedBankTransactions = (data.bankTransactions || [])
+                .map(txn => ({
+                    ...txn,
+                    _amount: getBankAmount(txn),
+                    _direction: getTransactionDirection(txn),
+                    _matches: findBankMatchCandidates(txn)
+                }))
+                .sort((a, b) => new Date(normalizeBankDate(b.date)) - new Date(normalizeBankDate(a.date)));
+            const bankCounts = {
+                all: enrichedBankTransactions.length,
+                needs_review: enrichedBankTransactions.filter(txn => !txn.reconciled).length,
+                matched: enrichedBankTransactions.filter(txn => !txn.reconciled && txn._matches.length > 0).length,
+                income: enrichedBankTransactions.filter(txn => txn._direction === 'income').length,
+                expenses: enrichedBankTransactions.filter(txn => txn._direction === 'outgoing').length,
+                reconciled: enrichedBankTransactions.filter(txn => txn.reconciled).length
+            };
+            const bankFilterTabs = [
+                { id: 'needs_review', label: 'Needs review', count: bankCounts.needs_review },
+                { id: 'matched', label: 'Likely matches', count: bankCounts.matched },
+                { id: 'income', label: 'Money in', count: bankCounts.income },
+                { id: 'expenses', label: 'Money out', count: bankCounts.expenses },
+                { id: 'reconciled', label: 'Reconciled', count: bankCounts.reconciled },
+                { id: 'all', label: 'All', count: bankCounts.all }
+            ];
+            const visibleBankTransactions = enrichedBankTransactions.filter(txn => {
+                const q = bankSearchTerm.trim().toLowerCase();
+                const searchable = `${txn.description || ''} ${txn.reference || ''} ${txn.category || ''} ${txn.suggested_category || ''} ${txn.from_party || ''} ${txn.to_party || ''}`.toLowerCase();
+                if (q && !searchable.includes(q)) return false;
+                if (bankStatusFilter === 'needs_review') return !txn.reconciled;
+                if (bankStatusFilter === 'matched') return !txn.reconciled && txn._matches.length > 0;
+                if (bankStatusFilter === 'income') return txn._direction === 'income';
+                if (bankStatusFilter === 'expenses') return txn._direction === 'outgoing';
+                if (bankStatusFilter === 'reconciled') return Boolean(txn.reconciled);
+                return true;
+            });
+
             return (
                 <div className="app-shell flex">
                     {/* Sidebar */}
@@ -3255,11 +4183,11 @@
                         />
                     )}
 
-                    <div className={`sidebar ${sidebarCollapsed ? 'w-16' : 'w-52'} min-h-screen shadow-lg fixed md:relative z-40 no-print transition-all duration-300 ${sidebarOpen ? '' : '-translate-x-full md:translate-x-0'}`} style={{ backgroundColor: 'var(--sidebar-bg, #000)' }}>
+                    <div className={`sidebar ${sidebarCollapsed ? 'w-16' : 'w-56'} min-h-screen shadow-lg fixed md:relative z-40 no-print transition-all duration-300 ${sidebarOpen ? '' : '-translate-x-full md:translate-x-0'}`} style={{ backgroundColor: 'var(--sidebar-bg, #000)' }}>
                         <div className={`${sidebarCollapsed ? 'p-2' : 'p-3'} border-b border-gray-700`}>
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                    <Icon name="Building2" className="w-6 h-6 text-blue-400" />
+                                    <img src="/icon-192.svg" alt="" className={`${sidebarCollapsed ? 'h-9 w-9' : 'h-8 w-8'} rounded-lg shadow-sm`} />
                                     {!sidebarCollapsed && (
                                         <div>
                                             <h1 className="text-sm font-bold leading-tight text-white">{data.company.name || 'Company'}</h1>
@@ -3284,18 +4212,26 @@
                         </div>
                         
                         <nav className={`sidebar-nav ${sidebarCollapsed ? 'p-1' : 'p-2'}`}>
-                            {menuItems.map(item => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id)}
-                                    title={item.label}
-                                    className={`sidebar-item w-full flex items-center gap-2 ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'} py-2 rounded-lg mb-1 transition-all ${
-                                        activeTab === item.id ? 'active font-semibold text-white' : 'text-gray-300 hover:text-white'
-                                    } ${sidebarCollapsed ? 'text-sm' : ''}`}
-                                >
-                                    <Icon name={item.icon} className="w-5 h-5" />
-                                    {!sidebarCollapsed && <span>{item.label}</span>}
-                                </button>
+                            {menuGroups.map(group => (
+                                <div key={group.label} className={sidebarCollapsed ? 'mb-2' : 'mb-1'}>
+                                    {!sidebarCollapsed && <div className="sidebar-section-label">{group.label}</div>}
+                                    {group.items.map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => {
+                                                setActiveTab(item.id);
+                                                if (window.innerWidth < 1024) setSidebarOpen(false);
+                                            }}
+                                            title={item.label}
+                                            className={`sidebar-item w-full flex items-center gap-2 ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'} py-2 rounded-lg mb-1 transition-all ${
+                                                activeTab === item.id ? 'active font-semibold text-white' : 'text-gray-300 hover:text-white'
+                                            } ${sidebarCollapsed ? 'text-sm' : ''}`}
+                                        >
+                                            <Icon name={item.icon} className="w-5 h-5" />
+                                            {!sidebarCollapsed && <span>{item.label}</span>}
+                                        </button>
+                                    ))}
+                                </div>
                             ))}
                         </nav>
                         
@@ -3305,6 +4241,31 @@
                                     <p className="text-xs text-gray-400">Logged in as</p>
                                     <p className="text-sm font-semibold truncate text-white">{user?.primaryEmailAddress?.emailAddress}</p>
                                 </div>
+                            )}
+                            {sidebarCollapsed ? (
+                                <button
+                                    type="button"
+                                    onClick={toggleThemeMode}
+                                    className="theme-switch flex h-9 w-full items-center justify-center rounded-lg hover:text-white"
+                                    title={`Switch to ${preferences.theme === 'dark' ? 'light' : 'dark'} mode`}
+                                >
+                                    <Icon name={preferences.theme === 'dark' ? 'Sun' : 'Moon'} className="w-4 h-4" />
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={toggleThemeMode}
+                                    className="theme-switch flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm hover:text-white"
+                                    title={`Switch to ${preferences.theme === 'dark' ? 'light' : 'dark'} mode`}
+                                >
+                                    <span className="inline-flex items-center gap-2">
+                                        <Icon name={preferences.theme === 'dark' ? 'Moon' : 'Sun'} className="w-4 h-4" />
+                                        Theme
+                                    </span>
+                                    <span className="theme-switch-track inline-flex items-center">
+                                        <span className="theme-switch-thumb"></span>
+                                    </span>
+                                </button>
                             )}
                             <button
                                 onClick={exportData}
@@ -3344,17 +4305,20 @@
                                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Dashboard</p>
                                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
                                         <div>
-                                            <h2 className="text-2xl font-bold text-white">{data.company.name || 'Company'} overview</h2>
-                                            <p className="text-sm text-slate-400">Operational snapshot across sales, bills, banking and compliance.</p>
+                                            <h2 className="page-title text-2xl font-bold">{data.company.name || 'Company'} overview</h2>
+                                            <p className="page-subtitle text-sm">Operational snapshot across sales, bills, banking and compliance.</p>
                                         </div>
                                         <div className="flex flex-wrap gap-2 text-xs">
-                                            <button onClick={() => setActiveTab('invoices')} className="status-pill text-slate-200 px-3 py-2 rounded-md hover:border-sky-400">
+                                            <button onClick={() => openModal('invoice')} className="quick-action px-3 py-2 rounded-md">
                                                 New invoice
                                             </button>
-                                            <button onClick={() => setActiveTab('bills')} className="status-pill text-slate-200 px-3 py-2 rounded-md hover:border-sky-400">
+                                            <button onClick={() => openModal('bill')} className="quick-action px-3 py-2 rounded-md">
                                                 Add bill
                                             </button>
-                                            <button onClick={() => setActiveTab('banking')} className="status-pill text-slate-200 px-3 py-2 rounded-md hover:border-sky-400">
+                                            <button onClick={() => openModal('expense')} className="quick-action px-3 py-2 rounded-md">
+                                                Add expense
+                                            </button>
+                                            <button onClick={() => setActiveTab('banking')} className="quick-action px-3 py-2 rounded-md">
                                                 Reconcile
                                             </button>
                                         </div>
@@ -3427,7 +4391,7 @@
                                             </div>
                                         </div>
                                         <div className="mt-3 rounded-md border border-amber-400/20 bg-amber-400/10 p-3">
-                                            <p className="text-xs text-amber-100">Validate VAT, accounts and filing data before submission.</p>
+                                            <p className="text-xs text-amber-800">Validate VAT, accounts and filing data before submission.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -3498,7 +4462,34 @@
                             </>
                         )}
 
-                        {activeTab === 'alerts' && (
+                        {activeTab === 'compliance' && (
+                            <div className="bg-white rounded-lg shadow p-4 md:p-5">
+                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-bold text-gray-900">Compliance</h2>
+                                        <p className="mt-1 text-sm text-gray-600">Review filing dates, tax alerts, VAT records and director loan movements in one place.</p>
+                                    </div>
+                                    <div className="section-tabs">
+                                        {[
+                                            { id: 'keydates', label: 'Key Dates' },
+                                            { id: 'alerts', label: 'Alerts' },
+                                            { id: 'vat', label: 'VAT Returns' },
+                                            { id: 'dla', label: 'DLA' }
+                                        ].map(tab => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => setComplianceSubTab(tab.id)}
+                                                className={`section-tab ${complianceSubTab === tab.id ? 'active' : ''}`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {(activeTab === 'alerts' || (activeTab === 'compliance' && complianceSubTab === 'alerts')) && (
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
@@ -3554,7 +4545,7 @@
                                 </div>
                             </div>
                         )}
-                        {activeTab === 'keydates' && (
+                        {(activeTab === 'keydates' || (activeTab === 'compliance' && complianceSubTab === 'keydates')) && (
                             <div>
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
@@ -3566,7 +4557,7 @@
                                             try { 
                                                 await fetchCompanyRegistrationDate(); 
                                             } catch(e) { 
-                                                alert(e.message || 'Failed to fetch from Companies House'); 
+                                                showToast(e.message || 'Failed to fetch from Companies House', 'error'); 
                                             } 
                                         }}
                                         className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
@@ -3665,7 +4656,7 @@
                                         </div>
                                     </div>
 
-                                    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 shadow-sm">
+                                    <div className="advice-card rounded-2xl p-6 shadow-sm">
                                         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                             <Icon name="AlertCircle" className="w-5 h-5 text-purple-600" />
                                             Compliance Tips
@@ -3692,7 +4683,7 @@
                                 </div>
                             </div>
                         )}
-                        {activeTab === 'dla' && (
+                        {(activeTab === 'dla' || (activeTab === 'compliance' && complianceSubTab === 'dla')) && (
                             <div>
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-xl font-bold">Director's Loan Account (DLA)</h2>
@@ -3779,7 +4770,7 @@
                                     </div>
                                 )}
                                 
-                                {showReconcileModal && (
+                                {false && showReconcileModal && (
                                     <div className="fixed inset-0 z-50 flex items-center justify-center">
                                         <div className="absolute inset-0 bg-black opacity-40" onClick={() => setShowReconcileModal(false)} />
                                         <div className="bg-white rounded-lg p-6 z-10 w-full max-w-lg">
@@ -3791,6 +4782,19 @@
                                                     <p className="text-lg font-bold mt-2">
                                                         {selectedTransaction.paid_in > 0 ? `+£${selectedTransaction.paid_in}` : `-£${selectedTransaction.paid_out}`}
                                                     </p>
+                                                </div>
+                                            )}
+                                            {selectedTransaction && findBankMatchCandidates(selectedTransaction)[0] && (
+                                                <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4 text-sm">
+                                                    <p className="font-semibold text-blue-900">Suggested match</p>
+                                                    {(() => {
+                                                        const match = findBankMatchCandidates(selectedTransaction)[0];
+                                                        return (
+                                                            <p className="mt-1 text-blue-800 capitalize">
+                                                                {match.type}: {match.reference} · £{match.amount.toFixed(2)} · {match.score}% confidence
+                                                            </p>
+                                                        );
+                                                    })()}
                                                 </div>
                                             )}
                                             <form onSubmit={(e) => { e.preventDefault(); reconcileTransaction(); }}>
@@ -3822,6 +4826,12 @@
                                                             ))}
                                                         </select>
                                                     </>
+                                                )}
+
+                                                {(reconcileForm.matched_type === 'bill' || reconcileForm.matched_type === 'expense') && (
+                                                    <div className="bg-slate-50 border border-slate-200 rounded p-3 mb-3 text-xs text-slate-700">
+                                                        This will mark the bank transaction as reconciled against a {reconcileForm.matched_type}. The suggestion and notes are kept with this reconciliation.
+                                                    </div>
                                                 )}
                                                 
                                                 <label className="block text-sm text-gray-700">Account Code</label>
@@ -4224,21 +5234,34 @@
                                         </label>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <label className="block text-xs font-semibold tracking-wide text-gray-700">
+                                        <div className="block text-xs font-semibold tracking-wide text-gray-700 sm:col-span-3">
                                             Theme
-                                            <select
-                                                value={settingsForm.theme}
-                                                onChange={e => handleSettingsInputChange('theme', e.target.value)}
-                                                className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                            >
-                                                <option value="dark">Dark Mode</option>
-                                                <option value="light">Light Mode</option>
-                                                <option value="auto">Auto (System)</option>
-                                            </select>
-                                        </label>
+                                            <div className="theme-radio-group" role="radiogroup" aria-label="Theme">
+                                                {[
+                                                    { id: 'light', label: 'Light' },
+                                                    { id: 'dark', label: 'Dark' },
+                                                    { id: 'auto', label: 'System' }
+                                                ].map(option => (
+                                                    <label
+                                                        key={option.id}
+                                                        className={`theme-radio-option ${settingsForm.theme === option.id ? 'active' : ''}`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name="theme"
+                                                            value={option.id}
+                                                            checked={settingsForm.theme === option.id}
+                                                            onChange={() => handleSettingsInputChange('theme', option.id)}
+                                                        />
+                                                        <span>{option.label}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
                                         <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Font Size
                                             <select
+                                                name="fontSize"
                                                 value={settingsForm.fontSize}
                                                 onChange={e => handleSettingsInputChange('fontSize', e.target.value)}
                                                 className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -4251,6 +5274,7 @@
                                         <label className="block text-xs font-semibold tracking-wide text-gray-700">
                                             Font Style
                                             <select
+                                                name="fontFamily"
                                                 value={settingsForm.fontFamily}
                                                 onChange={e => handleSettingsInputChange('fontFamily', e.target.value)}
                                                 className="w-full mt-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -4309,7 +5333,32 @@
                             </form>
                         )}
 
-                        {activeTab === 'customers' && (
+                        {activeTab === 'people' && (
+                            <div className="bg-white rounded-lg shadow p-4 md:p-5">
+                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-bold text-gray-900">People</h2>
+                                        <p className="mt-1 text-sm text-gray-600">Manage the customers you invoice and the suppliers you buy from.</p>
+                                    </div>
+                                    <div className="section-tabs">
+                                        {[
+                                            { id: 'customers', label: `Customers (${data.customers.length})` },
+                                            { id: 'suppliers', label: `Suppliers (${data.suppliers.length})` }
+                                        ].map(tab => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => setPeopleSubTab(tab.id)}
+                                                className={`section-tab ${peopleSubTab === tab.id ? 'active' : ''}`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {(activeTab === 'customers' || (activeTab === 'people' && peopleSubTab === 'customers')) && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
                                 <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                                     <h2 className="text-xl md:text-2xl font-bold">Customers</h2>
@@ -4355,7 +5404,7 @@
                             </div>
                         )}
 
-                        {activeTab === 'suppliers' && (
+                        {(activeTab === 'suppliers' || (activeTab === 'people' && peopleSubTab === 'suppliers')) && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
                                 <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                                     <h2 className="text-xl md:text-2xl font-bold">Suppliers</h2>
@@ -4474,11 +5523,24 @@
                         {activeTab === 'bills' && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
                                 <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-                                    <h2 className="text-xl md:text-2xl font-bold">Purchase Bills</h2>
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-bold">Purchase Bills</h2>
+                                        <p className="mt-1 text-sm text-gray-600">Use this for supplier invoices that are unpaid or need tracking in accounts payable.</p>
+                                    </div>
                                     <button onClick={() => openModal('bill')} className="flex items-center gap-2 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm md:text-base">
                                         <Icon name="Plus" className="w-4 md:w-5 h-4 md:h-5" />
                                         <span className="hidden sm:inline">Add Bill</span>
                                         <span className="sm:hidden">Add</span>
+                                    </button>
+                                </div>
+                                <div className="mb-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+                                        <p className="text-sm font-semibold text-rose-900">When to use Purchase Bills</p>
+                                        <p className="mt-1 text-sm text-rose-800">Supplier invoice received, payment due now or later, or you need to see what the company owes.</p>
+                                    </div>
+                                    <button onClick={() => setActiveTab('expenses')} className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-left hover:bg-blue-100">
+                                        <p className="text-sm font-semibold text-blue-900">Already paid by card or bank?</p>
+                                        <p className="mt-1 text-sm text-blue-800">Record Amazon, Currys and receipt purchases as Expenses instead.</p>
                                     </button>
                                 </div>
                                 <div className="overflow-x-auto">
@@ -4546,12 +5608,25 @@
                         {activeTab === 'expenses' && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
                                 <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-                                    <h2 className="text-xl md:text-2xl font-bold">Expenses</h2>
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-bold">Expenses</h2>
+                                        <p className="mt-1 text-sm text-gray-600">Use this for purchases that are already paid by card, bank, cash or director reimbursement.</p>
+                                    </div>
                                     <button onClick={() => openModal('expense')} className="flex items-center gap-2 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm md:text-base">
                                         <Icon name="Plus" className="w-4 md:w-5 h-4 md:h-5" />
                                         <span className="hidden sm:inline">Add Expense</span>
                                         <span className="sm:hidden">Add</span>
                                     </button>
+                                </div>
+                                <div className="mb-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                        <p className="text-sm font-semibold text-blue-900">Typical use</p>
+                                        <p className="mt-1 text-sm text-blue-800">Amazon receipt, Currys card purchase, travel, software subscriptions and small paid purchases.</p>
+                                    </div>
+                                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                                        <p className="text-sm font-semibold text-emerald-900">Not VAT registered</p>
+                                        <p className="mt-1 text-sm text-emerald-800">Enter the full gross amount paid. VAT is part of the cost and is not reclaimed.</p>
+                                    </div>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full min-w-[600px]">
@@ -4660,27 +5735,27 @@
                         {activeTab === 'banking' && (
                             <div className="space-y-6">
                                 <div className="bg-white rounded-lg shadow p-6">
-                                    <div className="flex justify-between items-center mb-6">
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-6">
                                         <h2 className="text-2xl font-bold">Banking</h2>
-                                        <div className="flex gap-2">
+                                        <div className="section-tabs">
                                             <button 
                                                 onClick={() => setBankingSubTab('transactions')} 
-                                                className={`px-4 py-2 rounded ${bankingSubTab === 'transactions' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                className={`section-tab ${bankingSubTab === 'transactions' ? 'active' : ''}`}>
                                                 Transactions
                                             </button>
                                             <button 
                                                 onClick={() => setBankingSubTab('rules')} 
-                                                className={`px-4 py-2 rounded ${bankingSubTab === 'rules' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                className={`section-tab ${bankingSubTab === 'rules' ? 'active' : ''}`}>
                                                 Rules
                                             </button>
                                             <button 
                                                 onClick={() => setBankingSubTab('accounts')} 
-                                                className={`px-4 py-2 rounded ${bankingSubTab === 'accounts' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                className={`section-tab ${bankingSubTab === 'accounts' ? 'active' : ''}`}>
                                                 Bank Accounts
                                             </button>
                                             <button 
                                                 onClick={() => setBankingSubTab('chart')} 
-                                                className={`px-4 py-2 rounded ${bankingSubTab === 'chart' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                                                className={`section-tab ${bankingSubTab === 'chart' ? 'active' : ''}`}>
                                                 Chart of Accounts
                                             </button>
                                         </div>
@@ -4688,26 +5763,49 @@
                                     
                                     {bankingSubTab === 'transactions' && (
                                         <>
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="text-xl font-semibold">Bank Transactions</h3>
-                                                <div className="flex gap-2">
-                                                    <button 
-                                                        onClick={autoCategorizeTransactions}
-                                                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
-                                                        <Icon name="Zap" className="w-5 h-5" />
-                                                        Auto-Categorize
-                                                    </button>
-                                                    <label className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-                                                        <Icon name="Upload" className="w-5 h-5" />
-                                                        Import from Tide
-                                                        <input type="file" accept=".csv" onChange={importBankCSV} className="hidden" />
-                                                    </label>
+                                            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4 mb-4">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-xl font-semibold">Bank Transactions</h3>
+                                                        <label className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer" title="Import bank statement CSV">
+                                                            <Icon name="Upload" className="w-4 h-4" />
+                                                            <input type="file" accept=".csv" onChange={importBankCSV} className="hidden" />
+                                                        </label>
+                                                    </div>
+                                                    <p className="mt-1 text-sm text-gray-600">Import statements, skip duplicates, find likely matches and reconcile what needs review.</p>
                                                 </div>
                                             </div>
-                                            
-                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm">
-                                                <p><strong>Bank Reconciliation:</strong> Match transactions to invoices/bills, categorize by account codes, and create journal entries.</p>
-                                                <p className="mt-1">✅ Reconciled: {data.bankTransactions.filter(t => t.reconciled).length} | ⏳ Pending: {data.bankTransactions.filter(t => !t.reconciled).length}</p>
+
+                                            {bankImportSummary && (
+                                                <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                                                    <strong>Last import:</strong> {bankImportSummary.imported} new transaction{bankImportSummary.imported === 1 ? '' : 's'} imported, {bankImportSummary.skipped} duplicate{bankImportSummary.skipped === 1 ? '' : 's'} skipped from {bankImportSummary.fileName}.
+                                                </div>
+                                            )}
+
+                                            <div className="mb-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+                                                <div className="relative w-full xl:max-w-md">
+                                                    <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <input
+                                                        type="search"
+                                                        value={bankSearchTerm}
+                                                        onChange={(e) => setBankSearchTerm(e.target.value)}
+                                                        placeholder="Search description, reference, category or party..."
+                                                        className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {bankFilterTabs.map(tab => (
+                                                            <button
+                                                                key={tab.id}
+                                                                onClick={() => setBankStatusFilter(tab.id)}
+                                                                className={`rounded-lg border px-3 py-2 text-sm font-semibold ${bankStatusFilter === tab.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}
+                                                            >
+                                                                {tab.label} <span className={bankStatusFilter === tab.id ? 'text-blue-100' : 'text-gray-400'}>{tab.count}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                             
                                             <div className="overflow-x-auto">
@@ -4716,7 +5814,7 @@
                                                         <tr>
                                                             <th className="px-3 py-2 text-left text-xs font-semibold">Date</th>
                                                             <th className="px-3 py-2 text-left text-xs font-semibold">Description</th>
-                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Category</th>
+                                                            <th className="px-3 py-2 text-left text-xs font-semibold">Smart match</th>
                                                             <th className="px-3 py-2 text-right text-xs font-semibold">Paid In</th>
                                                             <th className="px-3 py-2 text-right text-xs font-semibold">Paid Out</th>
                                                             <th className="px-3 py-2 text-center text-xs font-semibold">Status</th>
@@ -4724,52 +5822,112 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {data.bankTransactions?.length === 0 ? (
-                                                            <tr><td colSpan="7" className="text-center py-8 text-gray-500">No transactions. Import from Tide to get started.</td></tr>
-                                                        ) : data.bankTransactions.map(txn => (
-                                                            <tr key={txn.id} className={`border-t hover:bg-gray-50 ${txn.reconciled ? 'bg-green-50' : ''}`}>
-                                                                <td className="px-3 py-2 text-xs">{new Date(txn.date).toLocaleDateString('en-GB')}</td>
-                                                                <td className="px-3 py-2 text-xs">
-                                                                    <div className="font-medium">{txn.description}</div>
-                                                                    {txn.reference && <div className="text-gray-500 text-xs">{txn.reference}</div>}
-                                                                    {txn.confidence_score && <div className="text-xs text-purple-600">Confidence: {txn.confidence_score}%</div>}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-xs">
-                                                                    <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs">
-                                                                        {txn.suggested_category || txn.category || 'Uncategorized'}
-                                                                    </span>
-                                                                    {txn.matched_type && txn.matched_type !== 'unmatched' && (
-                                                                        <div className="text-xs text-blue-600 mt-1">{txn.matched_type}</div>
+                                                        {visibleBankTransactions.length === 0 ? (
+                                                            <tr><td colSpan="7" className="text-center py-8 text-gray-500">No transactions match this view. Import a CSV or change the filters.</td></tr>
+                                                        ) : visibleBankTransactions.map(txn => {
+                                                            const paidIn = parseFloat(txn.paid_in || 0) || 0;
+                                                            const paidOut = parseFloat(txn.paid_out || 0) || 0;
+                                                            const bestMatch = txn._matches[0];
+                                                            const expanded = expandedBankTxnId === txn.id;
+                                                            return (
+                                                                <React.Fragment key={txn.id}>
+                                                                    <tr className={`border-t hover:bg-gray-50 ${txn.reconciled ? 'bg-green-50' : bestMatch ? 'bg-blue-50/40' : ''}`}>
+                                                                        <td className="px-3 py-3 text-xs">{normalizeBankDate(txn.date) ? new Date(normalizeBankDate(txn.date)).toLocaleDateString('en-GB') : '—'}</td>
+                                                                        <td className="px-3 py-3 text-xs">
+                                                                            <div className="font-semibold text-gray-900">{txn.description || 'Bank transaction'}</div>
+                                                                            <div className="mt-1 flex flex-wrap items-center gap-2 text-gray-500">
+                                                                                {txn.reference && <span>Ref: {txn.reference}</span>}
+                                                                                <span className="rounded bg-gray-100 px-2 py-0.5">{txn.suggested_category || txn.category || 'Uncategorised'}</span>
+                                                                                {txn.transaction_id && <span className="font-mono">ID {txn.transaction_id}</span>}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="px-3 py-3 text-xs">
+                                                                            {bestMatch ? (
+                                                                                <div>
+                                                                                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 font-semibold text-blue-800">
+                                                                                        {bestMatch.type} · {bestMatch.score}%
+                                                                                    </span>
+                                                                                    <p className="mt-1 text-gray-600">{bestMatch.reference}</p>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <span className="text-gray-400">No strong match</span>
+                                                                            )}
+                                                                        </td>
+                                                                        <td className="px-3 py-3 text-xs text-right font-semibold text-green-600">
+                                                                            {paidIn > 0 ? `£${paidIn.toLocaleString()}` : '—'}
+                                                                        </td>
+                                                                        <td className="px-3 py-3 text-xs text-right font-semibold text-red-600">
+                                                                            {paidOut > 0 ? `£${paidOut.toLocaleString()}` : '—'}
+                                                                        </td>
+                                                                        <td className="px-3 py-3 text-center">
+                                                                            {txn.reconciled ? (
+                                                                                <span className="inline-block px-2 py-1 rounded text-xs bg-green-100 text-green-700">
+                                                                                    Reconciled
+                                                                                </span>
+                                                                            ) : bestMatch ? (
+                                                                                <span className="inline-block px-2 py-1 rounded text-xs bg-blue-100 text-blue-700">
+                                                                                    Suggested
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="inline-block px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-700">
+                                                                                    Review
+                                                                                </span>
+                                                                            )}
+                                                                        </td>
+                                                                        <td className="px-3 py-3 text-center">
+                                                                            <div className="flex justify-center gap-2">
+                                                                                <button
+                                                                                    onClick={() => setExpandedBankTxnId(expanded ? null : txn.id)}
+                                                                                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 text-xs font-bold text-gray-600 hover:bg-gray-100"
+                                                                                    title="Show reconciliation details"
+                                                                                >
+                                                                                    i
+                                                                                </button>
+                                                                                {!txn.reconciled && (
+                                                                                    <button 
+                                                                                        onClick={() => openReconcileModal(txn)}
+                                                                                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold">
+                                                                                        Reconcile
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                    {expanded && (
+                                                                        <tr className="bg-slate-50">
+                                                                            <td colSpan="7" className="px-4 py-4">
+                                                                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 text-sm">
+                                                                                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                                                                        <p className="font-semibold text-slate-900">Transaction detail</p>
+                                                                                        <p className="mt-2 text-slate-600">Status: {txn.reconciled ? 'Reconciled' : 'Needs review'}</p>
+                                                                                        <p className="text-slate-600">Type: {txn._direction === 'income' ? 'Money in' : txn._direction === 'outgoing' ? 'Money out' : 'Neutral'}</p>
+                                                                                        {txn.notes && <p className="text-slate-600">Notes: {txn.notes}</p>}
+                                                                                    </div>
+                                                                                    <div className="rounded-lg border border-slate-200 bg-white p-3 lg:col-span-2">
+                                                                                        <p className="font-semibold text-slate-900">Possible matches</p>
+                                                                                        {txn._matches.length === 0 ? (
+                                                                                            <p className="mt-2 text-slate-500">No likely expense, bill or invoice found yet.</p>
+                                                                                        ) : (
+                                                                                            <div className="mt-2 space-y-2">
+                                                                                                {txn._matches.map(match => (
+                                                                                                    <div key={match.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md bg-slate-50 p-2">
+                                                                                                        <div>
+                                                                                                            <p className="font-medium capitalize text-slate-900">{match.type}: {match.reference}</p>
+                                                                                                            <p className="text-xs text-slate-500">{match.name} · {match.date} · {match.status}</p>
+                                                                                                        </div>
+                                                                                                        <div className="text-sm font-semibold text-slate-900">£{match.amount.toFixed(2)} · {match.score}%</div>
+                                                                                                    </div>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
                                                                     )}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-xs text-right font-semibold text-green-600">
-                                                                    {txn.paid_in > 0 ? `£${txn.paid_in.toLocaleString()}` : '—'}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-xs text-right font-semibold text-red-600">
-                                                                    {txn.paid_out > 0 ? `£${txn.paid_out.toLocaleString()}` : '—'}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-center">
-                                                                    {txn.reconciled ? (
-                                                                        <span className="inline-block px-2 py-1 rounded text-xs bg-green-100 text-green-700">
-                                                                            ✓ Reconciled
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="inline-block px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-700">
-                                                                            Pending
-                                                                        </span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="px-3 py-2 text-center">
-                                                                    {!txn.reconciled && (
-                                                                        <button 
-                                                                            onClick={() => openReconcileModal(txn)}
-                                                                            className="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                                                                            Reconcile
-                                                                        </button>
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        ))}
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -4788,7 +5946,7 @@
                                                 </button>
                                             </div>
                                             
-                                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm">
+                                            <div className="notice-card is-warning rounded-lg p-3 mb-4 text-sm">
                                                 <p><strong>Smart Categorization:</strong> Rules automatically match transactions to categories based on description, parties, amounts, etc.</p>
                                                 <p className="mt-1">Higher priority rules are applied first. Click "Auto-Categorize" in Transactions tab to apply rules.</p>
                                             </div>
@@ -4847,7 +6005,7 @@
                                                 {data.bankAccounts.length === 0 ? (
                                                     <div className="col-span-full text-center py-8 text-gray-500">No bank accounts yet. Add your first account!</div>
                                                 ) : data.bankAccounts.map(account => (
-                                                    <div key={account.id} className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                                                    <div key={account.id} className="metric-card rounded-lg p-4">
                                                         <div className="flex justify-between items-start mb-3">
                                                             <h3 className="font-bold text-lg">{account.name}</h3>
                                                             <div className="flex gap-1">
@@ -4862,7 +6020,7 @@
                                                         <p className="text-sm text-gray-600">{account.bank}</p>
                                                         {account.accountNumber && <p className="text-xs text-gray-500 font-mono">ACC: {account.accountNumber}</p>}
                                                         {account.sortCode && <p className="text-xs text-gray-500 font-mono">Sort: {account.sortCode}</p>}
-                                                        <div className="mt-3 pt-3 border-t border-blue-200">
+                                                        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--panel-border)' }}>
                                                             <p className="text-2xl font-bold text-blue-700">{account.currency} {account.balance.toLocaleString()}</p>
                                                             <p className="text-xs text-gray-600">Current Balance</p>
                                                         </div>
@@ -4921,7 +6079,7 @@
                             </div>
                         )}
 
-                        {activeTab === 'vat' && (
+                        {(activeTab === 'vat' || (activeTab === 'compliance' && complianceSubTab === 'vat')) && (
                             <div className="bg-white rounded-lg shadow p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-2xl font-bold">VAT Returns</h2>
@@ -4983,7 +6141,49 @@
                             </div>
                         )}
 
+                        {renderReconcileModal()}
                         {renderModal()}
+                        <div className="toast-stack" aria-live="polite" aria-atomic="true">
+                            {notifications.map(notification => (
+                                <div key={notification.id} className={`app-toast ${notification.type}`}>
+                                    <div className="flex items-start justify-between gap-3">
+                                        <p className="text-sm font-semibold">{notification.message}</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNotifications(prev => prev.filter(item => item.id !== notification.id))}
+                                            className="text-gray-400 hover:text-gray-100"
+                                            aria-label="Dismiss notification"
+                                        >
+                                            <Icon name="X" className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {confirmDialog && (
+                            <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/50 p-4">
+                                <div className="confirm-dialog w-full max-w-md rounded-2xl p-5 shadow-2xl">
+                                    <h3 className="text-lg font-bold">{confirmDialog.title}</h3>
+                                    <p className="mt-2 whitespace-pre-line text-sm text-gray-500">{confirmDialog.message}</p>
+                                    <div className="mt-5 flex justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => resolveConfirm(false)}
+                                            className="btn btn-secondary"
+                                        >
+                                            {confirmDialog.cancelText}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => resolveConfirm(true)}
+                                            className={`btn ${confirmDialog.tone === 'danger' ? 'btn-danger' : 'btn-primary'}`}
+                                        >
+                                            {confirmDialog.confirmText}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         </div>
                         </div>
                     </div>

@@ -1,4 +1,24 @@
-<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" fill="#3b82f6"/>
-  <text x="96" y="120" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle">SB</text>
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SwenBooks logo mark">
+  <defs>
+    <linearGradient id="tile" x1="24" y1="18" x2="168" y2="174" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="0.52" stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="stroke" x1="48" y1="54" x2="144" y2="136" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#BFFFEA"/>
+    </linearGradient>
+    <filter id="shadow" x="11" y="13" width="170" height="170" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#020617" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect x="18" y="18" width="156" height="156" rx="42" fill="url(#tile)" filter="url(#shadow)"/>
+  <path d="M58 55H122C133.046 55 142 63.9543 142 75V137H70C58.9543 137 50 128.046 50 117V63C50 58.5817 53.5817 55 58 55Z" fill="#F8FAFC" fill-opacity="0.16"/>
+  <path d="M70 72H122" stroke="#E0F2FE" stroke-opacity="0.78" stroke-width="8" stroke-linecap="round"/>
+  <path d="M70 94H112" stroke="#E0F2FE" stroke-opacity="0.46" stroke-width="8" stroke-linecap="round"/>
+  <path d="M70 116H99" stroke="#E0F2FE" stroke-opacity="0.36" stroke-width="8" stroke-linecap="round"/>
+  <path d="M136 64C112 52 79 59 77 80C75 100 122 93 119 116C116 140 75 139 55 124" stroke="url(#stroke)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M126 122L136 132L155 107" stroke="#BFFFEA" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="139" cy="60" r="8" fill="#BFFFEA"/>
 </svg>
