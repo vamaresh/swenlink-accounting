@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">SwenBooks</string>
+    <string name="launch_url">https://books.swenlink.co.uk/app</string>
+    <string name="host_name">books.swenlink.co.uk</string>
+    <string name="asset_statements">
+        [{
+            \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+            \"target\": {
+                \"namespace\": \"web\",
+                \"site\": \"https://books.swenlink.co.uk\"
+            }
+        }]
+    </string>
+</resources>

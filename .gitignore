@@ -3,3 +3,8 @@ node_modules/
 reports/
 test-results/
 playwright-report/
+android/.gradle/
+android/**/build/
+android/local.properties
+*.jks
+*.keystore

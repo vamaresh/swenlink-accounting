@@ -1,0 +1,52 @@
+name: Android TWA Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'codex/**'
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-twa.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-twa.yml'
+
+jobs:
+  android-twa:
+    name: android-twa
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+
+      - name: Build debug Android App Bundle
+        run: gradle -p android :app:bundleDebug
+
+      - name: Upload debug app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: swenbooks-debug-aab
+          path: android/app/build/outputs/bundle/debug/*.aab
+          if-no-files-found: error
