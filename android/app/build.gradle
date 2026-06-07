@@ -6,12 +6,34 @@ android {
     namespace "uk.co.swenlink.books"
     compileSdk 35
 
+    def uploadStoreFile = System.getenv("SWENBOOKS_UPLOAD_STORE_FILE")
+    def uploadStorePassword = System.getenv("SWENBOOKS_UPLOAD_STORE_PASSWORD")
+    def uploadKeyAlias = System.getenv("SWENBOOKS_UPLOAD_KEY_ALIAS")
+    def uploadKeyPassword = System.getenv("SWENBOOKS_UPLOAD_KEY_PASSWORD")
+
     defaultConfig {
         applicationId "uk.co.swenlink.books"
         minSdk 23
         targetSdk 35
         versionCode 1
         versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            if (uploadStoreFile && uploadStorePassword && uploadKeyAlias && uploadKeyPassword) {
+                storeFile file(uploadStoreFile)
+                storePassword uploadStorePassword
+                keyAlias uploadKeyAlias
+                keyPassword uploadKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
     }
 }
 
