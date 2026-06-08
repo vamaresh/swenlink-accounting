@@ -114,6 +114,10 @@
         .section-tab { border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; font-weight: 700; color: var(--text-secondary); transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
         .section-tab:hover { color: var(--text-primary); }
         .section-tab.active { background: var(--surface-1); color: #2563eb; box-shadow: var(--theme-shadow); }
+        .app-section-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+        .app-action-button { min-height: 2.5rem; white-space: nowrap; }
+        .app-action-button svg { flex: 0 0 auto; }
+        .app-action-label-mobile { display: none; }
         .mobile-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
         .mobile-scrollbar::-webkit-scrollbar { display: none; }
         .theme-toggle { display: inline-flex; width: 100%; gap: 0.25rem; border-radius: 0.625rem; background: var(--surface-2); border: 1px solid var(--panel-border); padding: 0.25rem; }
@@ -379,6 +383,12 @@
             .banking-tabs { display: flex; width: 100%; max-width: 100%; overflow-x: auto; flex-wrap: nowrap; gap: 0.35rem; padding: 0.25rem; }
             .banking-tabs .section-tab { flex: 0 0 auto; white-space: nowrap; min-height: 2.75rem; padding: 0.6rem 0.85rem; }
             .bank-actions-row { align-items: flex-start; }
+            .app-section-toolbar { flex-wrap: nowrap; align-items: center; gap: 0.75rem; }
+            .app-section-toolbar > :first-child { min-width: 0; }
+            .app-action-button { min-height: 2.25rem; padding: 0.48rem 0.7rem; border-radius: 0.625rem; font-size: 0.875rem; line-height: 1.15; }
+            .app-action-button svg { width: 1rem !important; height: 1rem !important; }
+            .app-action-label-desktop { display: none; }
+            .app-action-label-mobile { display: inline; }
         }
         
         @media (max-width: 480px) {
@@ -5382,9 +5392,9 @@
 
                         {(activeTab === 'customers' || (activeTab === 'people' && peopleSubTab === 'customers')) && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
-                                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+                                <div className="app-section-toolbar mb-6">
                                     <h2 className="text-xl md:text-2xl font-bold">Customers</h2>
-                                    <button onClick={() => openModal('customer')} className="flex items-center gap-2 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm md:text-base">
+                                    <button onClick={() => openModal('customer')} className="btn btn-primary app-action-button">
                                         <Icon name="Plus" className="w-4 md:w-5 h-4 md:h-5" />
                                         <span className="hidden sm:inline">Add Customer</span>
                                         <span className="sm:hidden">Add</span>
@@ -5428,9 +5438,9 @@
 
                         {(activeTab === 'suppliers' || (activeTab === 'people' && peopleSubTab === 'suppliers')) && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
-                                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+                                <div className="app-section-toolbar mb-6">
                                     <h2 className="text-xl md:text-2xl font-bold">Suppliers</h2>
-                                    <button onClick={() => openModal('supplier')} className="flex items-center gap-2 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm md:text-base">
+                                    <button onClick={() => openModal('supplier')} className="btn btn-primary app-action-button">
                                         <Icon name="Plus" className="w-4 md:w-5 h-4 md:h-5" />
                                         <span className="hidden sm:inline">Add Supplier</span>
                                         <span className="sm:hidden">Add</span>
@@ -5474,9 +5484,9 @@
 
                         {activeTab === 'invoices' && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
-                                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+                                <div className="app-section-toolbar mb-6">
                                     <h2 className="text-xl md:text-2xl font-bold">Sales Invoices</h2>
-                                    <button onClick={() => openModal('invoice')} className="flex items-center gap-2 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm md:text-base">
+                                    <button onClick={() => openModal('invoice')} className="btn btn-primary app-action-button">
                                         <Icon name="Plus" className="w-4 md:w-5 h-4 md:h-5" />
                                         <span className="hidden sm:inline">Create Invoice</span>
                                         <span className="sm:hidden">Create</span>
@@ -5544,12 +5554,12 @@
 
                         {activeTab === 'bills' && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
-                                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+                                <div className="app-section-toolbar mb-6">
                                     <div>
                                         <h2 className="text-xl md:text-2xl font-bold">Purchase Bills</h2>
                                         <p className="mt-1 text-sm text-gray-600">Use this for supplier invoices that are unpaid or need tracking in accounts payable.</p>
                                     </div>
-                                    <button onClick={() => openModal('bill')} className="flex items-center gap-2 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm md:text-base">
+                                    <button onClick={() => openModal('bill')} className="btn btn-primary app-action-button">
                                         <Icon name="Plus" className="w-4 md:w-5 h-4 md:h-5" />
                                         <span className="hidden sm:inline">Add Bill</span>
                                         <span className="sm:hidden">Add</span>
@@ -5629,12 +5639,12 @@
 
                         {activeTab === 'expenses' && (
                             <div className="bg-white rounded-lg shadow p-4 md:p-6">
-                                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+                                <div className="app-section-toolbar mb-6">
                                     <div>
                                         <h2 className="text-xl md:text-2xl font-bold">Expenses</h2>
                                         <p className="mt-1 text-sm text-gray-600">Use this for purchases that are already paid by card, bank, cash or director reimbursement.</p>
                                     </div>
-                                    <button onClick={() => openModal('expense')} className="flex items-center gap-2 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm md:text-base">
+                                    <button onClick={() => openModal('expense')} className="btn btn-primary app-action-button">
                                         <Icon name="Plus" className="w-4 md:w-5 h-4 md:h-5" />
                                         <span className="hidden sm:inline">Add Expense</span>
                                         <span className="sm:hidden">Add</span>
@@ -5701,11 +5711,11 @@
 
                         {activeTab === 'accounts' && (
                             <div className="bg-white rounded-lg shadow p-6">
-                                <div className="flex justify-between items-center mb-6">
+                                <div className="app-section-toolbar mb-6">
                                     <h2 className="text-2xl font-bold">Chart of Accounts</h2>
-                                    <button onClick={() => openModal('account')} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                    <button onClick={() => openModal('account')} className="btn btn-primary app-action-button">
                                         <Icon name="Plus" className="w-5 h-5" />
-                                        Add Account
+                                        <span>Add Account</span>
                                     </button>
                                 </div>
                                 <div className="overflow-x-auto">
@@ -5975,13 +5985,14 @@
                                     
                                     {bankingSubTab === 'rules' && (
                                         <>
-                                            <div className="flex justify-between items-center mb-4">
+                                            <div className="app-section-toolbar mb-4">
                                                 <h3 className="text-xl font-semibold">Categorization Rules</h3>
                                                 <button 
                                                     onClick={() => setShowRulesModal(true)}
-                                                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                                    className="btn btn-primary app-action-button">
                                                     <Icon name="Plus" className="w-5 h-5" />
-                                                    Add Rule
+                                                    <span className="app-action-label-desktop">Add Rule</span>
+                                                    <span className="app-action-label-mobile">Add rule</span>
                                                 </button>
                                             </div>
                                             
@@ -6033,11 +6044,12 @@
                                     
                                     {bankingSubTab === 'accounts' && (
                                         <>
-                                            <div className="flex justify-between items-center mb-4">
+                                            <div className="app-section-toolbar mb-4">
                                                 <h3 className="text-xl font-semibold">Bank Accounts</h3>
-                                                <button onClick={() => openModal('bankAccount')} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                                <button onClick={() => openModal('bankAccount')} className="btn btn-primary app-action-button">
                                                     <Icon name="Plus" className="w-5 h-5" />
-                                                    Add Bank Account
+                                                    <span className="app-action-label-desktop">Add Bank Account</span>
+                                                    <span className="app-action-label-mobile">Add account</span>
                                                 </button>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
