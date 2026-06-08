@@ -114,6 +114,21 @@
         .section-tab { border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; font-weight: 700; color: var(--text-secondary); transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
         .section-tab:hover { color: var(--text-primary); }
         .section-tab.active { background: var(--surface-1); color: #2563eb; box-shadow: var(--theme-shadow); }
+        .mobile-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+        .mobile-scrollbar::-webkit-scrollbar { display: none; }
+        .banking-card { background: var(--surface-1); border: 1px solid var(--panel-border); color: var(--text-primary); }
+        .banking-card p,
+        .banking-card span { color: inherit; }
+        .bank-filter-strip { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .bank-filter-chip { border-radius: 0.625rem; border: 1px solid var(--panel-border); background: var(--surface-1); color: var(--text-primary); padding: 0.55rem 0.8rem; font-size: 0.875rem; font-weight: 800; line-height: 1.2; }
+        .bank-filter-chip.active { border-color: #2563eb; background: #2563eb; color: #ffffff; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.22); }
+        .bank-filter-count { color: var(--text-secondary); }
+        .bank-filter-chip.active .bank-filter-count { color: #bfdbfe; }
+        .bank-mobile-card { background: var(--surface-1); border: 1px solid var(--panel-border); color: var(--text-primary); box-shadow: var(--theme-shadow); }
+        .bank-mobile-meta { color: var(--text-secondary); }
+        .bank-mobile-pill { border: 1px solid var(--panel-border); background: var(--surface-2); color: var(--text-secondary); }
+        .bank-mobile-action { border: 1px solid var(--panel-border); background: var(--surface-2); color: var(--text-primary); }
+        .bank-mobile-action.primary { border-color: #2563eb; background: #2563eb; color: #ffffff; }
         .theme-toggle { display: inline-flex; width: 100%; gap: 0.25rem; border-radius: 0.625rem; background: var(--surface-2); border: 1px solid var(--panel-border); padding: 0.25rem; }
         .theme-toggle button { flex: 1; border-radius: 0.5rem; padding: 0.55rem 0.75rem; font-size: 0.875rem; font-weight: 700; color: var(--text-secondary); transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
         .theme-toggle button.active { background: var(--surface-1); color: #2563eb; box-shadow: var(--theme-shadow); }
@@ -372,6 +387,13 @@
             .grid { grid-template-columns: 1fr !important; }
             table { font-size: 0.875rem; }
             .modal-content { max-height: 90vh; overflow-y: auto; }
+            .banking-shell { padding: 1rem !important; border-radius: 0.875rem !important; }
+            .banking-header { gap: 1rem !important; margin-bottom: 1.25rem !important; }
+            .banking-tabs { display: flex; width: 100%; max-width: 100%; overflow-x: auto; flex-wrap: nowrap; gap: 0.35rem; padding: 0.25rem; }
+            .banking-tabs .section-tab { flex: 0 0 auto; white-space: nowrap; min-height: 2.75rem; padding: 0.6rem 0.85rem; }
+            .bank-actions-row { align-items: flex-start; }
+            .bank-filter-strip { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding: 0.15rem 0 0.45rem; scroll-snap-type: x mandatory; }
+            .bank-filter-chip { flex: 0 0 auto; min-height: 2.75rem; white-space: nowrap; scroll-snap-align: start; }
         }
         
         @media (max-width: 480px) {
@@ -741,6 +763,7 @@
             const [bankStatusFilter, setBankStatusFilter] = React.useState('needs_review')
             const [bankImportSummary, setBankImportSummary] = React.useState(null)
             const [expandedBankTxnId, setExpandedBankTxnId] = React.useState(null)
+            const [isMobileView, setIsMobileView] = React.useState(() => window.matchMedia('(max-width: 767px)').matches)
             const [peopleSubTab, setPeopleSubTab] = React.useState('customers')
             const [complianceSubTab, setComplianceSubTab] = React.useState('keydates')
             const [isExtractingBill, setIsExtractingBill] = React.useState(false)
@@ -768,6 +791,18 @@
                 }
                 setConfirmDialog(null);
             };
+
+            useEffect(() => {
+                const query = window.matchMedia('(max-width: 767px)');
+                const updateMobileState = () => setIsMobileView(query.matches);
+                updateMobileState();
+                if (query.addEventListener) {
+                    query.addEventListener('change', updateMobileState);
+                    return () => query.removeEventListener('change', updateMobileState);
+                }
+                query.addListener(updateMobileState);
+                return () => query.removeListener(updateMobileState);
+            }, []);
 
             useEffect(() => {
                 let stopped = false;
@@ -5734,10 +5769,10 @@
 
                         {activeTab === 'banking' && (
                             <div className="space-y-6">
-                                <div className="bg-white rounded-lg shadow p-6">
-                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-6">
+                                <div className="banking-shell bg-white rounded-lg shadow p-6">
+                                    <div className="banking-header flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-6">
                                         <h2 className="text-2xl font-bold">Banking</h2>
-                                        <div className="section-tabs">
+                                        <div className="section-tabs banking-tabs mobile-scrollbar">
                                             <button 
                                                 onClick={() => setBankingSubTab('transactions')} 
                                                 className={`section-tab ${bankingSubTab === 'transactions' ? 'active' : ''}`}>
@@ -5763,7 +5798,7 @@
                                     
                                     {bankingSubTab === 'transactions' && (
                                         <>
-                                            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4 mb-4">
+                                            <div className="bank-actions-row flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4 mb-4">
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <h3 className="text-xl font-semibold">Bank Transactions</h3>
@@ -5789,26 +5824,117 @@
                                                         type="search"
                                                         value={bankSearchTerm}
                                                         onChange={(e) => setBankSearchTerm(e.target.value)}
-                                                        placeholder="Search description, reference, category or party..."
+                                                        placeholder={isMobileView ? 'Search transactions...' : 'Search description, reference, category or party...'}
                                                         className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                                     />
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {bankFilterTabs.map(tab => (
-                                                            <button
-                                                                key={tab.id}
-                                                                onClick={() => setBankStatusFilter(tab.id)}
-                                                                className={`rounded-lg border px-3 py-2 text-sm font-semibold ${bankStatusFilter === tab.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}
-                                                            >
-                                                                {tab.label} <span className={bankStatusFilter === tab.id ? 'text-blue-100' : 'text-gray-400'}>{tab.count}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
+                                                <div className="bank-filter-strip mobile-scrollbar">
+                                                    {bankFilterTabs.map(tab => (
+                                                        <button
+                                                            key={tab.id}
+                                                            onClick={() => setBankStatusFilter(tab.id)}
+                                                            className={`bank-filter-chip ${bankStatusFilter === tab.id ? 'active' : ''}`}
+                                                        >
+                                                            {tab.label} <span className="bank-filter-count">{tab.count}</span>
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             </div>
                                             
-                                            <div className="overflow-x-auto">
+                                            {isMobileView && (
+                                            <div className="bank-mobile-list space-y-3">
+                                                {visibleBankTransactions.length === 0 ? (
+                                                    <div className="bank-mobile-card rounded-xl p-4 text-center bank-mobile-meta">No transactions match this view. Import a CSV or change the filters.</div>
+                                                ) : visibleBankTransactions.map(txn => {
+                                                    const paidIn = parseFloat(txn.paid_in || 0) || 0;
+                                                    const paidOut = parseFloat(txn.paid_out || 0) || 0;
+                                                    const bestMatch = txn._matches[0];
+                                                    const expanded = expandedBankTxnId === txn.id;
+                                                    const amount = paidIn > 0 ? paidIn : paidOut;
+                                                    const amountTone = paidIn > 0 ? 'text-emerald-400' : 'text-rose-400';
+                                                    const statusLabel = txn.reconciled ? 'Reconciled' : bestMatch ? 'Suggested' : 'Review';
+                                                    return (
+                                                        <div key={txn.id} className="bank-mobile-card rounded-xl p-4">
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div className="min-w-0">
+                                                                    <p className="bank-mobile-meta text-xs font-semibold">{normalizeBankDate(txn.date) ? new Date(normalizeBankDate(txn.date)).toLocaleDateString('en-GB') : 'No date'}</p>
+                                                                    <h4 className="mt-1 text-base font-bold leading-snug break-words">{txn.description || 'Bank transaction'}</h4>
+                                                                </div>
+                                                                <div className={`shrink-0 text-right text-base font-extrabold ${amountTone}`}>
+                                                                    {amount > 0 ? `${paidIn > 0 ? '+' : '-'}£${amount.toLocaleString()}` : '—'}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                                                                <span className="bank-mobile-pill rounded-full px-2.5 py-1">{statusLabel}</span>
+                                                                <span className="bank-mobile-pill rounded-full px-2.5 py-1">{txn.suggested_category || txn.category || 'Uncategorised'}</span>
+                                                                <span className="bank-mobile-pill rounded-full px-2.5 py-1">{txn._direction === 'income' ? 'Money in' : txn._direction === 'outgoing' ? 'Money out' : 'Neutral'}</span>
+                                                            </div>
+
+                                                            {txn.reference && <p className="bank-mobile-meta mt-3 text-xs break-words">Ref: {txn.reference}</p>}
+
+                                                            <div className="mt-3 rounded-lg border border-slate-700/40 bg-slate-900/20 p-3">
+                                                                {bestMatch ? (
+                                                                    <>
+                                                                        <p className="text-xs font-bold text-blue-300">Smart match · {bestMatch.score}%</p>
+                                                                        <p className="mt-1 text-sm font-semibold break-words">{bestMatch.type}: {bestMatch.reference}</p>
+                                                                        <p className="bank-mobile-meta mt-1 text-xs break-words">{bestMatch.name}</p>
+                                                                    </>
+                                                                ) : (
+                                                                    <p className="bank-mobile-meta text-sm">No strong match found yet.</p>
+                                                                )}
+                                                            </div>
+
+                                                            {expanded && (
+                                                                <div className="mt-3 space-y-2 text-sm">
+                                                                    <div className="bank-mobile-pill rounded-lg p-3">
+                                                                        <p className="font-bold">Transaction detail</p>
+                                                                        <p className="bank-mobile-meta mt-1">Status: {txn.reconciled ? 'Reconciled' : 'Needs review'}</p>
+                                                                        {txn.transaction_id && <p className="bank-mobile-meta break-words">ID: {txn.transaction_id}</p>}
+                                                                        {txn.notes && <p className="bank-mobile-meta break-words">Notes: {txn.notes}</p>}
+                                                                    </div>
+                                                                    {txn._matches.length > 0 && (
+                                                                        <div className="bank-mobile-pill rounded-lg p-3">
+                                                                            <p className="font-bold">Possible matches</p>
+                                                                            <div className="mt-2 space-y-2">
+                                                                                {txn._matches.map(match => (
+                                                                                    <div key={match.id} className="rounded-md bg-slate-950/20 p-2">
+                                                                                        <p className="font-semibold capitalize">{match.type}: {match.reference}</p>
+                                                                                        <p className="bank-mobile-meta text-xs">{match.date} · £{match.amount.toFixed(2)} · {match.score}%</p>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            <div className="mt-4 grid grid-cols-2 gap-2">
+                                                                <button
+                                                                    onClick={() => setExpandedBankTxnId(expanded ? null : txn.id)}
+                                                                    className="bank-mobile-action rounded-lg px-3 py-2 text-sm font-bold"
+                                                                >
+                                                                    {expanded ? 'Hide details' : 'Details'}
+                                                                </button>
+                                                                {!txn.reconciled ? (
+                                                                    <button
+                                                                        onClick={() => openReconcileModal(txn)}
+                                                                        className="bank-mobile-action primary rounded-lg px-3 py-2 text-sm font-bold"
+                                                                    >
+                                                                        Reconcile
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="bank-mobile-action rounded-lg px-3 py-2 text-center text-sm font-bold">Done</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            )}
+
+                                            {!isMobileView && (
+                                            <div className="bank-desktop-table overflow-x-auto">
                                                 <table className="w-full text-sm">
                                                     <thead className="bg-gray-50">
                                                         <tr>
@@ -5931,6 +6057,7 @@
                                                     </tbody>
                                                 </table>
                                             </div>
+                                            )}
                                         </>
                                     )}
                                     
