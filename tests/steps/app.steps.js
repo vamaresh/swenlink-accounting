@@ -359,9 +359,12 @@ When('I reconcile the suggested banking transaction', async function () {
 });
 
 Then('the banking transaction should move to reconciled status', async function () {
+  const filterMenu = this.page.getByRole('button', { name: /Filter bank transactions/ });
+  await expectSingle(filterMenu, 'Bank transaction filter menu');
+  await filterMenu.click();
   const reconciledFilter = this.page.getByRole('button', { name: /Reconciled/ });
   const count = await reconciledFilter.count();
-  assert.ok(count >= 1, 'Expected Reconciled filter button');
+  assert.ok(count >= 1, 'Expected Reconciled filter option');
   await reconciledFilter.nth(0).click();
   const badges = this.page.getByText('Reconciled', { exact: true });
   const badgeCount = await badges.count();
